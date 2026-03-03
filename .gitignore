@@ -1,0 +1,33 @@
+# Virtual Environments
+churn_env/
+venv/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Notebook Checkpoints
+.ipynb_checkpoints/
+
+# System specific files
+.DS_Store
+Thumbs.db
+
+# Data files (Optional: hide data if proprietary)
+# data/Telco-Customer-Churn.csv# Virtual Environments
+churn_env/
+venv/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Notebook Checkpoints
+.ipynb_checkpoints/
+
+# System specific files
+.DS_Store
+Thumbs.db
+
+# Data files (Optional: hide data if proprietary)
+# data/Telco-Customer-Churn.csv
