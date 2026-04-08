@@ -58,3 +58,7 @@ The project uses a **Full-Stack Scikit-Learn Pipeline** for seamless deployment:
 ### **Launch Dashboard**
 * Execute the following command in your terminal:  
     `streamlit run src/app.py`
+
+## 👨‍🔬 Author
+
+**Krish Kamra**
