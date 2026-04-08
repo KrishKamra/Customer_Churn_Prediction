@@ -1,64 +1,74 @@
-# Customer Churn Prediction & Statistical Analysis
-
-> **Project Mission:** This project implements an end-to-end machine learning pipeline to predict telecommunications customer churn. Beyond simple prediction, it employs rigorous **inferential statistics** to derive actionable business insights from the Telco Customer Churn dataset.
 
 ---
 
-## 🚀 Project Overview
+# 📡 ChurnAI: Customer Prediction & Strategic Analytics
 
-* **Problem:** Identifying high-risk customers before they leave the service.
-* **Target:** `Churn` (Binary: **Yes/No**).
-* **Dataset:** 7,043 customer records with 21 features including *tenure*, *contract type*, and *charges*.
-* **Tech Stack:** `Python 3.13.12`, `Scikit-Learn`, `SciPy`, `Pandas`, `Seaborn`, and `Streamlit`.
+> **Project Mission:** An industry-grade machine learning platform that predicts telecommunications churn. This project bridges the gap between **inferential statistics** and **SaaS-level deployment**, providing actionable business intelligence via a high-performance Streamlit dashboard.
 
 ---
 
-## 📊 Key Statistical Findings
+## 🚀 Platform Overview
+
+* **Objective:** Proactively identify at-risk customers using a 20-feature predictive vector.
+* **Target Metric:** `Churn` (Binary: **Yes/No**).
+* **Deployment:** Dark-mode SaaS Dashboard with real-time "What-If" analysis.
+* **Tech Stack:** `Python 3.13`, `Scikit-Learn`, `SciPy`, `Streamlit`, and `Pandas`.
+
+---
+
+## 📊 Statistical Rigor & Discovery
 
 We utilized a **four-phase analytical approach** to ensure the model was grounded in statistical truth:
 
-### 1. Descriptive & Distribution Analysis
-* **Central Tendency:** Established baseline **means** and **medians** for `tenure` and `MonthlyCharges`.
-* **Normalization:** Applied **Log-Transformation** ($log1p$) to `TotalCharges` to resolve heavy right-skewness and satisfy normality assumptions for the model.
+### 1. Inferential Hypothesis Testing
+* **Independent Samples T-test:** Conducted on `TotalCharges_log`. With a P-value of $\approx 4.52 \times 10^{-15}$, we confirmed that spending patterns between churners and non-churners are statistically distinct.
+* **Chi-Square ($\chi^2$) Analysis:** Established **Contract Type** as the primary churn driver ($p < 0.05$), identifying Month-to-Month users as the highest-risk segment.
 
-### 2. Inferential Hypothesis Testing
-* **Numerical (T-Test):** Conducted an **Independent Samples T-test** on `TotalCharges_log`. With a P-value of $\approx 4.52 \times 10^{-15}$, we **rejected the null hypothesis**, confirming that spending patterns between churners and non-churners are statistically distinct.
-* **Categorical (Chi-Square):** Performed $\chi^2$ tests across all categorical features. **Contract Type** emerged as the most significant predictor ($p < 0.05$), with Month-to-Month customers showing a dramatically higher churn rate.
-
----
-
-## 🤖 Machine Learning Pipeline
-
-The project uses a **Full-Stack Scikit-Learn Pipeline** for seamless deployment:
-
-* **Preprocessing:** `SimpleImputer` for missing values, `StandardScaler` for numerical scaling, and `OneHotEncoder` for categorical variables.
-* **Model:** `LogisticRegression` with `class_weight='balanced'` to handle the inherent class imbalance (approx. 26% churn rate).
-* **Performance Metrics:**
-    * **Recall:** **~80%** (Prioritizing the identification of all potential churners).
-    * **ROC-AUC:** **~0.85** (High discriminative power between classes).
+### 2. Feature Engineering
+* **Log-Transformation:** Applied $log(1+x)$ to `TotalCharges` to normalize right-skewed data, improving model convergence and coefficient interpretability.
 
 ---
 
-## 💡 Business Insights & Strategy
+## 🤖 Machine Learning & Production Pipeline
 
-* **The "Danger Zone":** Threshold analysis reveals churn probability spikes in the **0–6 month** tenure window.
-* **Strategic Recommendation:** Implement a **"First 90 Days"** engagement program and offer incentives to migrate "Month-to-Month" users to long-term contracts.
+The project implements a **Full-Stack Scikit-Learn Pipeline** optimized for production:
+
+* **Preprocessing:** Automated handling of `SimpleImputer`, `StandardScaler`, and `OneHotEncoder`.
+* **Class Imbalance:** Utilized `class_weight='balanced'` within the `LogisticRegression` model to maintain sensitivity to the minority churn class (~26%).
+* **SaaS Dashboard Features:**
+    * **Interactive Predictor:** Core feature sliders for high-correlation variables (Tenure, Contract, Charges).
+    * **Advanced Input Hub:** Hidden `st.expander` for secondary demographic and service features, allowing for detailed "What-If" simulations.
+    * **Automated Reporting:** Instant generation of timestamped `.txt` risk reports for business stakeholders.
 
 ---
 
-## 🛠️ How to Run
+## 💡 Strategic Business ROI
 
-### **Environment Setup**
-1. Create a virtual environment: `python -m venv churn_env`
-2. Install dependencies: `pip install -r requirements.txt`
+* **The "Danger Zone":** Churn probability spikes significantly in the **0–6 month** tenure window.
+* **Performance Benchmarks:**
+    * **Recall:** **~80%** (Ensuring maximum coverage of at-risk accounts).
+    * **ROC-AUC:** **~0.85** (Exceptional class discrimination).
 
-### **Model Generation**
-* Run the Jupyter notebook to execute the pipeline and generate `churn_model_v1.pkl`.
+---
 
-### **Launch Dashboard**
-* Execute the following command in your terminal:  
-    `streamlit run src/app.py`
+## 🛠️ Installation & Usage
+
+### **1. Local Environment**
+```bash
+# Clone the repository
+git clone https://github.com/KrishKamra/Your-Repo-Name.git
+cd Your-Repo-Name
+
+# Run the automated setup script
+bash setup.sh
+```
+
+### **2. Launch the SaaS Portal**
+```bash
+streamlit run src/app.py
+```
+
+---
 
 ## 👨‍🔬 Author
-
-**Krish Kamra**
+**Krish Kamra** 
