@@ -1,74 +1,143 @@
+# 📡 Customer Churn Prediction
+
+### **Precision Customer Retention Powered by Inferential Intelligence**
+
+![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
+![Python: 3.13+](https://img.shields.io/badge/Python-3.13%2B-blue?logo=python&logoColor=white)
+![Framework: Streamlit](https://img.shields.io/badge/Framework-Streamlit-FF4B4B?logo=streamlit&logoColor=white)
+![Library: Scikit--Learn](https://img.shields.io/badge/Library-Scikit--Learn-F7931E?logo=scikit-learn&logoColor=white)
+![Aesthetics: Dark Mode](https://img.shields.io/badge/UI-SaaS_Dark_Mode-1a1c23)
 
 ---
 
-# 📡 ChurnAI: Customer Prediction & Strategic Analytics
+## 📖 Overview
 
-> **Project Mission:** An industry-grade machine learning platform that predicts telecommunications churn. This project bridges the gap between **inferential statistics** and **SaaS-level deployment**, providing actionable business intelligence via a high-performance Streamlit dashboard.
+**ChurnAI** is an industry-grade predictive analytics platform designed to bridge the gap between complex machine learning and actionable business strategy. In a subscription-based economy, customer churn is the "leaking bucket" that drains revenue; ChurnAI plugs that leak by identifying at-risk accounts with **80% recall accuracy** before they depart.
 
----
+This project goes beyond simple "black-box" predictions. It integrates **rigorous inferential statistics**—including Welch’s T-Tests and Chi-Square Contingency analysis—to provide a transparent, evidence-based view of customer behavior.
 
-## 🚀 Platform Overview
-
-* **Objective:** Proactively identify at-risk customers using a 20-feature predictive vector.
-* **Target Metric:** `Churn` (Binary: **Yes/No**).
-* **Deployment:** Dark-mode SaaS Dashboard with real-time "What-If" analysis.
-* **Tech Stack:** `Python 3.13`, `Scikit-Learn`, `SciPy`, `Streamlit`, and `Pandas`.
+Whether you are a Retention Manager looking for a "What-If" simulation tool or a Data Engineer seeking a robust Scikit-Learn pipeline, ChurnAI offers a production-ready interface to turn raw data into retention ROI.
 
 ---
 
-## 📊 Statistical Rigor & Discovery
+## 💎 Core Value Proposition
 
-We utilized a **four-phase analytical approach** to ensure the model was grounded in statistical truth:
-
-### 1. Inferential Hypothesis Testing
-* **Independent Samples T-test:** Conducted on `TotalCharges_log`. With a P-value of $\approx 4.52 \times 10^{-15}$, we confirmed that spending patterns between churners and non-churners are statistically distinct.
-* **Chi-Square ($\chi^2$) Analysis:** Established **Contract Type** as the primary churn driver ($p < 0.05$), identifying Month-to-Month users as the highest-risk segment.
-
-### 2. Feature Engineering
-* **Log-Transformation:** Applied $log(1+x)$ to `TotalCharges` to normalize right-skewed data, improving model convergence and coefficient interpretability.
+| Feature | Benefit |
+| :--- | :--- |
+| **80% Recall Model** | Prioritizes catching every potential leaker over false alarms. |
+| **SaaS Dark Mode UI** | Modern, card-based dashboard designed for executive presentations. |
+| **Statistical Validation** | Every feature is vetted via P-value significance $(\alpha = 0.05)$. |
+| **Automated Reporting** | Instant, timestamped risk reports for immediate stakeholder action. |
 
 ---
 
-## 🤖 Machine Learning & Production Pipeline
+## 🏗️ Architecture Overview
 
-The project implements a **Full-Stack Scikit-Learn Pipeline** optimized for production:
-
-* **Preprocessing:** Automated handling of `SimpleImputer`, `StandardScaler`, and `OneHotEncoder`.
-* **Class Imbalance:** Utilized `class_weight='balanced'` within the `LogisticRegression` model to maintain sensitivity to the minority churn class (~26%).
-* **SaaS Dashboard Features:**
-    * **Interactive Predictor:** Core feature sliders for high-correlation variables (Tenure, Contract, Charges).
-    * **Advanced Input Hub:** Hidden `st.expander` for secondary demographic and service features, allowing for detailed "What-If" simulations.
-    * **Automated Reporting:** Instant generation of timestamped `.txt` risk reports for business stakeholders.
-
----
-
-## 💡 Strategic Business ROI
-
-* **The "Danger Zone":** Churn probability spikes significantly in the **0–6 month** tenure window.
-* **Performance Benchmarks:**
-    * **Recall:** **~80%** (Ensuring maximum coverage of at-risk accounts).
-    * **ROC-AUC:** **~0.85** (Exceptional class discrimination).
-
----
-
-## 🛠️ Installation & Usage
-
-### **1. Local Environment**
-```bash
-# Clone the repository
-git clone https://github.com/KrishKamra/Your-Repo-Name.git
-cd Your-Repo-Name
-
-# Run the automated setup script
-bash setup.sh
+```mermaid
+graph LR
+    A[Raw CSV Data] --> B{Preprocessing Pipeline}
+    B --> C[Log-Transformation]
+    B --> D[One-Hot Encoding]
+    C --> E[Logistic Regression Engine]
+    D --> E
+    E --> F[Serialized Pickle Model]
+    F --> G[Streamlit SaaS UI]
+    G --> H[Predictor Hub]
+    G --> I[Analytics Dashboard]
+    H --> J[Downloadable Report]
 ```
 
-### **2. Launch the SaaS Portal**
+### **Architectural Highlights**
+* **Atomic Serialization:** The entire preprocessing logic and trained coefficients are bundled into a single `.pkl` file for zero-config deployment.
+* **Log-Normal Calibration:** Explicitly handles right-skewed financial data ($TotalCharges$) to ensure linear model stability.
+* **Responsive Input Hub:** Separates high-correlation drivers from secondary demographics via UI nesting.
+
+---
+
+## 🛠️ Technical Deep Dive
+
+### **Core Components**
+| Component | Technology | Role |
+| :--- | :--- | :--- |
+| **Modeling** | `LogisticRegression` | Interpretable binary classification with balanced class weights. |
+| **Statistics** | `SciPy Stats` | Hypothesis testing (T-test, $\chi^2$) for feature importance. |
+| **Frontend** | `Streamlit` | Custom CSS-injected wide-layout SaaS interface. |
+| **Persistence** | `Joblib` | Efficient serialization of the Scikit-Learn pipeline. |
+
+### **Security & Safety**
+* **Input Validation:** Strict `dtype` coercion on numeric inputs to prevent runtime crashes.
+* **Environment Isolation:** Optimized for `venv` deployment with pinned dependencies.
+
+---
+
+## ✨ Key Features
+
+* **🔍 Interactive Predictor:** Dynamic sliders and selectors for the most correlated churn drivers (Tenure, Contract, Charges).
+* **📊 Business Analytics Hub:** Visualizes the "Danger Zone" (0-6 month tenure) and contract-based risk segmentation.
+* **🛠️ Advanced Simulation:** Nested expanders allow power users to modify 20+ variables for deep-dive "What-If" scenarios.
+* **📥 One-Click Export:** Generates professional, internal-use-only text reports with probability metrics and action items.
+* **🎨 SaaS Aesthetics:** Custom CSS hover effects, soft shadows, and a consistent deep-space color palette.
+
+---
+
+## 📂 Project Structure
+
+```text
+Customer_Churn_Prediction/
+├── data/
+│   └── Telco_Customer_Churn.csv   # Raw dataset
+├── models/
+│   └── churn_model_v1.pkl         # Serialized ML Pipeline
+├── notebooks/
+│   └── analysis.ipynb             # Statistical & ML Training Lab
+├── src/
+│   └── app.py                     # Main Streamlit SaaS Application
+├── requirements.txt               # Dependency Manifest
+└── README.md                      # Professional Documentation
+```
+
+---
+
+## ⏱️ Quick Start
+
+### **1. Clone & Navigate**
+```bash
+git clone https://github.com/KrishKamra/Customer_Churn_Prediction.git
+cd Customer_Churn_Prediction
+```
+
+### **2. Setup Environment**
+```bash
+python -m venv churn_env
+source churn_env/bin/activate  # Windows: churn_env\Scripts\activate
+pip install -r requirements.txt
+```
+
+### **3. Launch the Dashboard**
 ```bash
 streamlit run src/app.py
 ```
 
 ---
 
+## 🗺️ Roadmap
+
+- [x] Phase 1: Statistical Hypothesis Testing (T-Tests/Chi-Square)
+- [x] Phase 2: Full-Stack Scikit-Learn Pipeline Serialization
+- [x] Phase 3: SaaS Dashboard UI with Dark Mode
+- [ ] Phase 4: Integration with SQLite/PostgreSQL for live customer lookups
+- [ ] Phase 5: Implementation of SHAP values for local explainability
+
+---
+
 ## 👨‍🔬 Author
-**Krish Kamra** 
+
+**Krish Kamra**
+
+---
+
+## 📄 License
+
+Distributed under the MIT License. See `LICENSE` for more information.
+
+---
