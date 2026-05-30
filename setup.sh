@@ -2,7 +2,7 @@
 # Create virtual environment
 python -m venv churn_env
 
-# Activate (Windows syntax included for your Zenbook)
+# Activate
 source churn_env/Scripts/activate || source churn_env/bin/activate
 
 # Install requirements
