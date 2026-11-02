@@ -1,0 +1,67 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  quality-gate:
+    name: Quality gate (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
+    env:
+      UV_PYTHON: ${{ matrix.python-version }}
+      MPLBACKEND: Agg
+      CHURNAI_LOG_FORMAT: json
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "latest"
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Set up Python
+        run: uv python install ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: uv sync --all-extras --locked
+
+      - name: Run Ruff Linter
+        run: uv run ruff check . --output-format=github
+
+      - name: Run Ruff Format Check
+        run: uv run ruff format --check .
+
+      - name: Run Type Checker (mypy)
+        run: uv run mypy src
+
+      - name: Execute Test Suite
+        run: uv run pytest tests/ --cov=src --cov-report=xml --cov-report=term-missing --cov-fail-under=80
+
+      - name: Model Validation Gate
+        run: uv run python -m src.models.evaluate --validate-thresholds --json
+
+      - name: Upload coverage report
+        if: matrix.python-version == '3.12'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-xml
+          path: coverage.xml
+          retention-days: 14

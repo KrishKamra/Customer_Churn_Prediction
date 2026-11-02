@@ -1,143 +1,189 @@
-# 📡 Customer Churn Prediction
+<div align="center">
 
-### **Precision Customer Retention Powered by Inferential Intelligence**
+# 📡 ChurnAI
 
-![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
-![Python: 3.13+](https://img.shields.io/badge/Python-3.13%2B-blue?logo=python&logoColor=white)
-![Framework: Streamlit](https://img.shields.io/badge/Framework-Streamlit-FF4B4B?logo=streamlit&logoColor=white)
-![Library: Scikit--Learn](https://img.shields.io/badge/Library-Scikit--Learn-F7931E?logo=scikit-learn&logoColor=white)
-![Aesthetics: Dark Mode](https://img.shields.io/badge/UI-SaaS_Dark_Mode-1a1c23)
+### Production-grade customer churn prediction & statistical intelligence
 
----
+[![CI](https://github.com/KrishKamra/Customer_Churn_Prediction/actions/workflows/ci.yml/badge.svg)](https://github.com/KrishKamra/Customer_Churn_Prediction/actions/workflows/ci.yml)
+![Python](https://img.shields.io/badge/python-3.11%20|%203.12%20|%203.13-3776AB?logo=python&logoColor=white)
+![uv](https://img.shields.io/badge/packaging-uv-DE5FE9)
+![Ruff](https://img.shields.io/badge/lint-ruff-D7FF64)
+![mypy](https://img.shields.io/badge/types-mypy-2A6DB2)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
 
-## 📖 Overview
+**Calibrated churn scores · SHAP explanations · counterfactual retention offers · statistical proof**
 
-**ChurnAI** is an industry-grade predictive analytics platform designed to bridge the gap between complex machine learning and actionable business strategy. In a subscription-based economy, customer churn is the "leaking bucket" that drains revenue; ChurnAI plugs that leak by identifying at-risk accounts with **80% recall accuracy** before they depart.
+[Quick start](#-quick-start) · [Results](#-results) · [Architecture](docs/architecture.md) · [Model card](docs/model_card.md) · [Benchmarks](docs/benchmarks.md) · [Design system](docs/design_system.md)
 
-This project goes beyond simple "black-box" predictions. It integrates **rigorous inferential statistics**—including Welch’s T-Tests and Chi-Square Contingency analysis—to provide a transparent, evidence-based view of customer behavior.
-
-Whether you are a Retention Manager looking for a "What-If" simulation tool or a Data Engineer seeking a robust Scikit-Learn pipeline, ChurnAI offers a production-ready interface to turn raw data into retention ROI.
-
----
-
-## 💎 Core Value Proposition
-
-| Feature | Benefit |
-| :--- | :--- |
-| **80% Recall Model** | Prioritizes catching every potential leaker over false alarms. |
-| **SaaS Dark Mode UI** | Modern, card-based dashboard designed for executive presentations. |
-| **Statistical Validation** | Every feature is vetted via P-value significance $(\alpha = 0.05)$. |
-| **Automated Reporting** | Instant, timestamped risk reports for immediate stakeholder action. |
+</div>
 
 ---
 
-## 🏗️ Architecture Overview
+## ✨ What is ChurnAI?
 
-```mermaid
-graph LR
-    A[Raw CSV Data] --> B{Preprocessing Pipeline}
-    B --> C[Log-Transformation]
-    B --> D[One-Hot Encoding]
-    C --> E[Logistic Regression Engine]
-    D --> E
-    E --> F[Serialized Pickle Model]
-    F --> G[Streamlit SaaS UI]
-    G --> H[Predictor Hub]
-    G --> I[Analytics Dashboard]
-    H --> J[Downloadable Report]
-```
+ChurnAI turns the IBM Telco customer base (7,043 subscribers) into ranked, explained and
+costed retention decisions:
 
-### **Architectural Highlights**
-* **Atomic Serialization:** The entire preprocessing logic and trained coefficients are bundled into a single `.pkl` file for zero-config deployment.
-* **Log-Normal Calibration:** Explicitly handles right-skewed financial data ($TotalCharges$) to ensure linear model stability.
-* **Responsive Input Hub:** Separates high-correlation drivers from secondary demographics via UI nesting.
+* **🔍 Real-time risk engine.** Edit any attribute and get back a *calibrated* churn
+  probability, a local SHAP waterfall explaining it, and counterfactual prescriptions such as
+  *"Migrate to a two-year contract reduces churn risk from 80 % to 23 %"*. A timestamped
+  executive report downloads with one click.
+* **🗄️ Live customer database.** ID autocomplete over SQLite (zero setup) or PostgreSQL
+  (`DATABASE_URL`), one-click score-and-log, and a full prediction audit timeline per customer.
+* **📊 Executive analytics with statistical proof.** Cohort dashboards including the 0–6 month
+  danger zone, backed by Welch's t-tests, Mann-Whitney U, χ² tests and bias-corrected
+  Cramér's V, all computed live.
+* **📂 Batch inference.** Drag-and-drop a CSV. Rows are schema-validated, scored in chunks,
+  ranked by risk, exported, and optionally written to the audit trail.
 
----
+Underneath sits a reproducible ML platform: a six-model tournament under repeated stratified
+CV, isotonic calibration, a threshold chosen to minimise business cost, a fingerprinted
+holdout, and a CI gate that blocks any model regression.
 
-## 🛠️ Technical Deep Dive
+![System architecture](docs/figures/system_architecture.png)
 
-### **Core Components**
-| Component | Technology | Role |
-| :--- | :--- | :--- |
-| **Modeling** | `LogisticRegression` | Interpretable binary classification with balanced class weights. |
-| **Statistics** | `SciPy Stats` | Hypothesis testing (T-test, $\chi^2$) for feature importance. |
-| **Frontend** | `Streamlit` | Custom CSS-injected wide-layout SaaS interface. |
-| **Persistence** | `Joblib` | Efficient serialization of the Scikit-Learn pipeline. |
+## 🏆 Results
 
-### **Security & Safety**
-* **Input Validation:** Strict `dtype` coercion on numeric inputs to prevent runtime crashes.
-* **Environment Isolation:** Optimized for `venv` deployment with pinned dependencies.
+Holdout set of 1,409 customers, never used for any modelling decision. Full tables are in
+[`docs/benchmarks.md`](docs/benchmarks.md).
 
----
+| Model | CV PR-AUC (2×5-fold) | Holdout ROC-AUC | Holdout PR-AUC | Recall @ cost-opt. threshold | Brier ↓ |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| **ElasticNet Logistic Regression** 🏆 | **0.655 ± 0.018** | **0.848** | **0.651** | 86.1 % | **0.134** |
+| Stacking (CatBoost + XGBoost + LR) | 0.652 | 0.849 | 0.647 | 86.6 % | 0.134 |
+| XGBoost | 0.649 | 0.843 | 0.637 | 90.6 % | 0.136 |
+| CatBoost | 0.636 | 0.842 | 0.643 | 92.0 % | 0.137 |
+| Balanced Random Forest | 0.637 | 0.841 | 0.632 | 89.0 % | 0.138 |
+| LightGBM | 0.636 | 0.838 | 0.631 | 87.4 % | 0.138 |
 
-## ✨ Key Features
+**Takeaways**
 
-* **🔍 Interactive Predictor:** Dynamic sliders and selectors for the most correlated churn drivers (Tenure, Contract, Charges).
-* **📊 Business Analytics Hub:** Visualizes the "Danger Zone" (0-6 month tenure) and contract-based risk segmentation.
-* **🛠️ Advanced Simulation:** Nested expanders allow power users to modify 20+ variables for deep-dive "What-If" scenarios.
-* **📥 One-Click Export:** Generates professional, internal-use-only text reports with probability metrics and action items.
-* **🎨 SaaS Aesthetics:** Custom CSS hover effects, soft shadows, and a consistent deep-space color palette.
+* The well-regularised linear model **wins**. On this dataset the non-leaky ceiling is about
+  ROC-AUC 0.85, and every contender lands within roughly one CV standard deviation of it. The
+  tournament shows that more complexity buys nothing here, and the champion is the most
+  interpretable and fastest option.
+* The deployed threshold is **0.185**, not 0.5, because a missed churner is assumed to cost 5×
+  a wasted retention offer. At that threshold the champion catches **322 of 374** holdout
+  churners. Expected loss falls from **$93k** (do nothing) and **$52k** (offer everyone) to
+  **$31k**, using an illustrative $50 per offer ([assumptions](docs/benchmarks.md#protocol)).
+* `Contract` is the strongest driver (Cramér's V = 0.41). Customers in their first six months
+  churn at **53 %**. `gender` is statistically independent of churn (χ² p = 0.47).
 
----
+<p align="center">
+  <img src="docs/figures/roc_pr_curves.png" width="88%" alt="ROC and PR curves"/>
+</p>
+<p align="center">
+  <img src="docs/figures/danger_zone_cohorts.png" width="49%" alt="Danger zone"/>
+  <img src="docs/figures/shap_summary.png" width="42%" alt="SHAP summary"/>
+</p>
 
-## 📂 Project Structure
+## 🚀 Quick start
 
-```text
-Customer_Churn_Prediction/
-├── data/
-│   └── Telco_Customer_Churn.csv   # Raw dataset
-├── models/
-│   └── churn_model_v1.pkl         # Serialized ML Pipeline
-├── notebooks/
-│   └── analysis.ipynb             # Statistical & ML Training Lab
-├── src/
-│   └── app.py                     # Main Streamlit SaaS Application
-├── requirements.txt               # Dependency Manifest
-└── README.md                      # Professional Documentation
-```
+Requires [uv](https://docs.astral.sh/uv/getting-started/installation/) (it installs the right
+Python for you).
 
----
-
-## ⏱️ Quick Start
-
-### **1. Clone & Navigate**
 ```bash
 git clone https://github.com/KrishKamra/Customer_Churn_Prediction.git
 cd Customer_Churn_Prediction
+uv sync --all-extras                      # reproducible env from uv.lock
+uv run streamlit run src/ui/app.py        # → http://localhost:8501
 ```
 
-### **2. Setup Environment**
-```bash
-python -m venv churn_env
-source churn_env/bin/activate  # Windows: churn_env\Scripts\activate
-pip install -r requirements.txt
+The trained production model is committed, so the app works immediately. On first start it
+creates `data/churn.db` and seeds it with all 7,043 customers.
+
+### Common tasks
+
+| Task | Command |
+| :--- | :--- |
+| Run the full tournament (CPU, ~5 min) | `uv run python -m src.models.train` |
+| Fast smoke run | `uv run python -m src.models.train --quick` |
+| GPU tournament + tuning | `uv run python -m src.models.train --device cuda --tune-iter 30` |
+| CI model gate | `uv run python -m src.models.evaluate --validate-thresholds` |
+| Tests + coverage | `uv run pytest --cov=src` |
+| Lint / format / types | `uv run ruff check . && uv run ruff format --check . && uv run mypy src` |
+| Use PostgreSQL | `uv sync --extra postgres` then `DATABASE_URL=postgresql://user:pass@host/db` |
+| Re-render the architecture figure | `uv run python scripts/render_architecture.py` |
+
+All settings, including seeds, CV folds, cost matrix, risk-tier cut-offs and gate thresholds,
+can be overridden with `CHURNAI_*` environment variables or a `.env` file. See
+[`src/config.py`](src/config.py).
+
+## 📓 Notebooks (Colab-ready)
+
+| Notebook | Purpose | Colab runtime |
+| :--- | :--- | :--- |
+| [01 · Exploratory data analysis](notebooks/01_exploratory_data_analysis.ipynb) [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/KrishKamra/Customer_Churn_Prediction/blob/main/notebooks/01_exploratory_data_analysis.ipynb) | Imbalance, skew, collinearity, danger-zone cohorts → parquet + figures | CPU |
+| [02 · Inferential statistics](notebooks/02_inferential_statistics.ipynb) [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/KrishKamra/Customer_Churn_Prediction/blob/main/notebooks/02_inferential_statistics.ipynb) | Welch, Mann-Whitney, 16× χ² + Cramér's V → `statistical_report.md` | CPU |
+| [03 · Model tournament & tuning](notebooks/03_model_benchmarking_tuning.ipynb) [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/KrishKamra/Customer_Churn_Prediction/blob/main/notebooks/03_model_benchmarking_tuning.ipynb) | 6-model tournament, calibration, cost curve, SHAP, CI gate | **L4 GPU + High-RAM** (pre-selected) |
+
+Each notebook bootstraps itself on Colab: it clones the repo and installs it with `uv`.
+Notebooks 01 and 02 finish with a cell that downloads the generated artifacts.
+
+**Notebook 03 publishes its own results.** Add a `GITHUB_TOKEN` Colab secret (a fine-grained
+token with *Contents: read & write* on this repo) once. After that, **Run all** retrains the
+models, passes the validation gate, and pushes `models/`, `docs/` and `data/processed/` to a
+`colab/retrain-<timestamp>` branch. It then prints a PR link, and CI re-checks the model on that
+PR. Without the secret it downloads a zip instead. Notebook 03 detects the GPU automatically.
+It trains XGBoost with `device="cuda"` and CatBoost with `task_type="GPU"`, and turns on
+hyper-parameter search (`TUNE_ITER=30`). An **L4** is the best value for this workload: with
+7k rows, an A100 or H100 finishes no faster but uses several times more compute units.
+
+## 🧱 Project layout
+
+```text
+├── .github/              CI workflow, Dependabot, issue forms, PR template
+├── data/
+│   ├── raw/              Telco_Customer_Churn.csv (immutable snapshot)
+│   └── processed/        churn_clean.parquet (versioned)
+├── docs/                 architecture · design system · model card · benchmarks · figures · evaluations
+├── models/               production_pipeline.joblib + model_metadata.json
+├── notebooks/            01 EDA · 02 inferential statistics · 03 tournament
+├── scripts/              render_architecture.py
+├── src/
+│   ├── config.py         pydantic-settings configuration
+│   ├── core/             logging · exceptions · GPU detection
+│   ├── features/         schema contract · stateless features · custom transformers
+│   ├── models/           pipeline · train · evaluate · inference · explainability · reporting
+│   ├── analytics/        inferential statistics · figure theme
+│   ├── db/               SQLModel schema · engine/session factory · repository
+│   └── ui/               Streamlit portal · glass components · CSS motion system
+└── tests/                data · pipeline/leakage · db · inference · analytics · training/gate
 ```
 
-### **3. Launch the Dashboard**
-```bash
-streamlit run src/app.py
-```
+## 🧪 Engineering quality
 
----
+* **Leakage-proof.** Every learned transform, including a target-derived risk-ratio encoder, is
+  re-fit inside each CV fold. Tests cover target independence of the stateless features and
+  fold-only fitting.
+* **Honest evaluation.** The holdout is SHA-256 fingerprinted, and CI fails if it changes.
+* **Typed and linted.** `mypy` is clean on `src/`, and `ruff` enforces rules `E F I N W UP`.
+* **Tested.** 60+ tests and over 80 % coverage of non-UI code, enforced in CI on Python 3.11 and 3.12.
+* **Portable artifacts.** GPU-trained boosters are converted to CPU inference before
+  serialization.
 
-## 🗺️ Roadmap
+## 📚 Documentation
 
-- [x] Phase 1: Statistical Hypothesis Testing (T-Tests/Chi-Square)
-- [x] Phase 2: Full-Stack Scikit-Learn Pipeline Serialization
-- [x] Phase 3: SaaS Dashboard UI with Dark Mode
-- [ ] Phase 4: Integration with SQLite/PostgreSQL for live customer lookups
-- [ ] Phase 5: Implementation of SHAP values for local explainability
+| Document | Contents |
+| :--- | :--- |
+| [Architecture](docs/architecture.md) | C4 context/container diagrams, pipeline, data flow, ERD, failure modes |
+| [Design system](docs/design_system.md) | Tokens, glassmorphism spec, motion and keyframes, component rules |
+| [Model card](docs/model_card.md) | Intended use, metrics, fairness analysis, limitations |
+| [Benchmarks](docs/benchmarks.md) | Cross-model scorecards, latency, cost analysis (auto-generated) |
+| [Statistical report](docs/evaluations/statistical_report.md) | Hypothesis tests and effect sizes (auto-generated) |
 
----
+## 🤝 Contributing & security
 
-## 👨‍🔬 Author
+Contributions are welcome. Start with [CONTRIBUTING.md](CONTRIBUTING.md), which covers the uv
+setup, branch naming, pre-commit checks and the PR checklist, and the
+[Code of Conduct](CODE_OF_CONDUCT.md). Report vulnerabilities privately as described in
+[SECURITY.md](SECURITY.md).
 
-**Krish Kamra**
+## 👤 Author
 
----
+**Krish Kamra**: [GitHub @KrishKamra](https://github.com/KrishKamra)
 
 ## 📄 License
 
-Distributed under the MIT License. See `LICENSE` for more information.
-
----
+Apache License 2.0. See [LICENSE](LICENSE). The IBM Telco Customer Churn dataset is
+distributed by IBM as a public sample dataset.

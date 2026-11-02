@@ -1,0 +1,49 @@
+name: ✨ Feature request
+description: Propose new functionality or an improvement.
+title: "[Feature]: "
+labels: ["enhancement", "triage"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem statement
+      description: What user or business problem does this solve? Who is affected?
+      placeholder: "Retention managers cannot ... which means ..."
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed functionality
+      description: Describe the behaviour you would like, including UI or API sketches if relevant.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Other approaches, workarounds you use today, or prior art in other tools.
+  - type: textarea
+    id: justification
+    attributes:
+      label: Business justification
+      description: Expected impact (e.g. recall, cost reduction, analyst time saved) and how we would measure it.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      multiple: true
+      options:
+        - Modeling & evaluation
+        - Explainability
+        - Dashboard / UX
+        - Data & persistence
+        - MLOps / CI
+        - Documentation
+  - type: dropdown
+    id: contribute
+    attributes:
+      label: Would you like to implement this?
+      options: ["Yes, I can open a PR", "I can help test", "No"]

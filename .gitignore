@@ -1,33 +1,45 @@
-# Virtual Environments
-churn_env/
-venv/
-
-# Python cache
+# --- Python ---------------------------------------------------------------
 __pycache__/
-*.pyc
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
 
-# Notebook Checkpoints
+# --- Environments ----------------------------------------------------------
+.venv/
+venv/
+churn_env/
+.env
+.env.*
+!.env.example
+
+# --- Tooling caches -------------------------------------------------------
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+catboost_info/
+
+# --- Notebooks ------------------------------------------------------------
 .ipynb_checkpoints/
 
-# System specific files
+# --- Local runtime data -----------------------------------------------------
+# The SQLite database is rebuilt (and seeded) automatically on first app start.
+data/*.db
+data/*.db-wal
+data/*.db-shm
+data/*.db-journal
+
+# --- Streamlit secrets ------------------------------------------------------
+.streamlit/secrets.toml
+
+# --- OS / editors ---------------------------------------------------------
 .DS_Store
 Thumbs.db
-
-# Data files (Optional: hide data if proprietary)
-# data/Telco-Customer-Churn.csv# Virtual Environments
-churn_env/
-venv/
-
-# Python cache
-__pycache__/
-*.pyc
-
-# Notebook Checkpoints
-.ipynb_checkpoints/
-
-# System specific files
-.DS_Store
-Thumbs.db
-
-# Data files (Optional: hide data if proprietary)
-# data/Telco-Customer-Churn.csv
+.idea/
+.vscode/
+enterprise_master_prompt.md

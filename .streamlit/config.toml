@@ -1,0 +1,15 @@
+# Native Streamlit theme aligned with the Obsidian design tokens (docs/design_system.md).
+# The injected CSS in src/ui/styles.py layers glass, motion and micro-interactions on top.
+[theme]
+base = "dark"
+primaryColor = "#6366F1"
+backgroundColor = "#0B0D13"
+secondaryBackgroundColor = "#161B2E"
+textColor = "#E6E8F0"
+font = "sans serif"
+
+[browser]
+gatherUsageStats = false
+
+[client]
+toolbarMode = "minimal"

@@ -1,0 +1,97 @@
+{
+  "model_version": "2.0.0+20261102.elasticnet_lr",
+  "package_version": "2.0.0",
+  "champion": "elasticnet_lr",
+  "champion_display_name": "ElasticNet Logistic Regression",
+  "trained_at": "2026-11-02T16:08:44.553101+00:00",
+  "decision_threshold": 0.185,
+  "threshold_strategy": "argmin cost_fn*FN + cost_fp*FP on out-of-fold calibrated probabilities",
+  "cost_matrix": {
+    "fn": 5.0,
+    "fp": 1.0,
+    "unit_usd": 50.0
+  },
+  "risk_tiers": {
+    "low_max": 0.2,
+    "medium_max": 0.45,
+    "high_max": 0.7
+  },
+  "calibration": "isotonic (CalibratedClassifierCV, cv=5, ensemble=False)",
+  "cv": {
+    "folds": 5,
+    "repeats": 2,
+    "mean": {
+      "pr_auc": 0.6549279674801087,
+      "roc_auc": 0.8491871730556719,
+      "brier": 0.13319631162237355,
+      "recall": 0.5354515050167225,
+      "precision": 0.6683506384071827,
+      "f2": 0.5565408071057766
+    },
+    "std": {
+      "pr_auc": 0.018429102173724704,
+      "roc_auc": 0.011792657513649125,
+      "brier": 0.004704273526874777,
+      "recall": 0.051775292630841484,
+      "precision": 0.03447156802740399,
+      "f2": 0.04313448156605118
+    }
+  },
+  "holdout": {
+    "pr_auc": 0.6506127503866505,
+    "roc_auc": 0.8480895915678525,
+    "recall": 0.8609625668449198,
+    "precision": 0.47703703703703704,
+    "f2": 0.7415937356057116,
+    "brier": 0.13425247635696516,
+    "threshold": 0.185,
+    "tp": 322,
+    "fp": 353,
+    "tn": 682,
+    "fn": 52,
+    "cost_units": 613.0,
+    "cost_per_customer": 0.4350603264726757,
+    "expected_loss_usd": 30650.0,
+    "fit_time_full_s": 7.138563799904659
+  },
+  "holdout_fingerprint": "1ad8aefb7e34776a78d76765d2465c630a41b3813b1d7d96d0d1b03d049776f6",
+  "n_train": 5634,
+  "n_holdout": 1409,
+  "train_churn_rate": 0.2653532126375577,
+  "feature_columns": [
+    "gender",
+    "SeniorCitizen",
+    "Partner",
+    "Dependents",
+    "tenure",
+    "PhoneService",
+    "MultipleLines",
+    "InternetService",
+    "OnlineSecurity",
+    "OnlineBackup",
+    "DeviceProtection",
+    "TechSupport",
+    "StreamingTV",
+    "StreamingMovies",
+    "Contract",
+    "PaperlessBilling",
+    "PaymentMethod",
+    "MonthlyCharges",
+    "TotalCharges"
+  ],
+  "target": "Churn",
+  "tuned_params": {},
+  "random_state": 42,
+  "device": "cpu",
+  "gpu": null,
+  "python": "3.12.13",
+  "libraries": {
+    "scikit-learn": "1.9.1",
+    "xgboost": "3.4.1",
+    "lightgbm": "4.7.0",
+    "catboost": "1.2.10",
+    "shap": "0.54.1",
+    "pandas": "3.1.0",
+    "numpy": "2.5.4"
+  }
+}

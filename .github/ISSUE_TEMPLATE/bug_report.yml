@@ -1,0 +1,82 @@
+name: 🐛 Bug report
+description: Something is broken or behaves unexpectedly.
+title: "[Bug]: "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug! Please search
+        [existing issues](https://github.com/KrishKamra/Customer_Churn_Prediction/issues) first.
+        **Security vulnerabilities must be reported privately — see SECURITY.md.**
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      options:
+        - Streamlit dashboard (src/ui)
+        - Training / evaluation (src/models)
+        - Feature pipeline (src/features)
+        - Database layer (src/db)
+        - Notebooks
+        - CI / packaging
+        - Documentation
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: A clear description of the bug and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. uv sync --all-extras
+        2. uv run streamlit run src/ui/app.py
+        3. Open "Batch Inference" and upload ...
+        4. See error
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs and stack trace
+      description: Paste the full traceback / log output. It is rendered as code automatically.
+      render: shell
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options: [Linux, macOS, Windows, Google Colab, Streamlit Community Cloud, Other]
+    validations:
+      required: true
+  - type: input
+    id: python
+    attributes:
+      label: Python version
+      placeholder: "3.12.4 (output of `uv run python --version`)"
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: ChurnAI version / commit
+      placeholder: "2.0.0 or git SHA"
+  - type: dropdown
+    id: database
+    attributes:
+      label: Database backend
+      options: [SQLite (default), PostgreSQL, Not applicable]
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I reproduced this on the latest `main`.
+          required: true
+        - label: I removed any customer data or secrets from the logs above.
+          required: true
