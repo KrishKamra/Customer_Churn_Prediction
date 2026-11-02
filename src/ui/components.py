@@ -44,8 +44,13 @@ def page_header(eyebrow: str, title: str, subtitle: str) -> None:
     )
 
 
-def section_title(icon: str, text: str) -> None:
-    render(f'<div class="section-title"><span>{icon}</span><span>{esc(text)}</span></div>')
+def icon(name: str) -> str:
+    """Inline Material Symbols icon (``name`` is a Material Symbols ligature, e.g. ``history``)."""
+    return f'<span class="msi" aria-hidden="true">{esc(name)}</span>'
+
+
+def section_title(icon_name: str, text: str) -> None:
+    render(f'<div class="section-title">{icon(icon_name)}<span>{esc(text)}</span></div>')
 
 
 def glass_container(key: str, border: bool = False) -> st.delta_generator.DeltaGenerator:

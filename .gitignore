@@ -43,3 +43,11 @@ Thumbs.db
 .idea/
 .vscode/
 enterprise_master_prompt.md
+
+# --- LaTeX build files (scripts/compile_paper.py builds in a temp dir) ---
+docs/paper/*.aux
+docs/paper/*.log
+docs/paper/*.bbl
+docs/paper/*.blg
+docs/paper/*.out
+docs/paper/*.synctex.gz

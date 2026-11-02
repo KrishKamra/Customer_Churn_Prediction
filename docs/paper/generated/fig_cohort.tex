@@ -1,0 +1,14 @@
+\begin{tikzpicture}
+\begin{axis}[ci base, width=\columnwidth, height=4.5cm, symbolic x coords={0-6m,7-12m,1-2y,2-4y,4y+},
+  xtick={0-6m,7-12m,1-2y,2-4y,4y+}, ymin=0, ymax=64, ylabel={Churn rate (\%)}, xlabel={Tenure cohort},
+  enlarge x limits=0.14, ymajorgrids,
+  extra y ticks={26.54}, extra y tick labels={},
+  extra y tick style={grid=major, major grid style={ciAmber, dashed, thick}}]
+\addplot[ybar, bar width=18pt, bar shift=0pt, fill=ciCrimson, draw=none, ci labels]
+  coordinates {(0-6m,52.94)};
+\addplot[ybar, bar width=18pt, bar shift=0pt, fill=ciViolet, draw=none, ci labels]
+  coordinates {(7-12m,35.89) (1-2y,28.71) (2-4y,20.39) (4y+,9.51)};
+\node[font=\scriptsize\sffamily, text=ciAmber, anchor=south east]
+  at (rel axis cs:0.985,0.4146) {overall 26.5\%};
+\end{axis}
+\end{tikzpicture}

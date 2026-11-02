@@ -44,6 +44,7 @@ FONT_FAMILY = "'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-seri
 
 _CSS = """
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0&display=block');
 
 :root {
   --bg-0: %(bg_0)s; --bg-1: %(bg_1)s; --card: %(card)s;
@@ -155,7 +156,17 @@ section[data-testid="stSidebar"] [role="radiogroup"] label:has(input:checked) {
   -webkit-background-clip: text; background-clip: text; color: transparent !important; }
 .page-sub { color: var(--text-muted); margin: .4rem 0 1.4rem 0; font-size: .98rem; max-width: 820px; }
 .section-title { font-size: 1.02rem; font-weight: 700; margin: 0 0 .6rem 0; display: flex;
-                 align-items: center; gap: .5rem; }
+                 align-items: center; gap: .55rem; }
+/* Material Symbols (same icon family Streamlit uses for widget icons). */
+.msi { font-family: 'Material Symbols Rounded'; font-weight: normal; font-style: normal;
+       font-size: 1.25em; line-height: 1; letter-spacing: normal; text-transform: none;
+       display: inline-block; white-space: nowrap; direction: ltr; vertical-align: middle;
+       font-feature-settings: 'liga'; -webkit-font-smoothing: antialiased;
+       font-variation-settings: 'FILL' 0, 'wght' 450, 'GRAD' 0, 'opsz' 24; }
+.section-title .msi { color: var(--violet-soft); padding: .3rem; border-radius: 8px;
+                      background: rgba(99,102,241,.12); border: 1px solid rgba(99,102,241,.22);
+                      font-size: 1.15rem; }
+.brand-mark .msi { color: #fff; font-size: 1.45rem; font-variation-settings: 'FILL' 1, 'wght' 500; }
 .muted { color: var(--text-muted) !important; } .faint { color: var(--text-faint) !important; }
 .mono { font-family: 'JetBrains Mono', monospace; }
 

@@ -1,0 +1,778 @@
+% =====================================================================================
+%  ChurnAI: Calibrated, Explainable and Cost-Sensitive Customer Churn Prediction
+%  IEEE conference format (IEEEtran). Compile with pdfLaTeX + BibTeX, or run
+%  `uv run python scripts/compile_paper.py`. Every number, table and chart in
+%  generated/ is produced by scripts/build_paper.py.
+% =====================================================================================
+\documentclass[conference]{IEEEtran}
+
+\usepackage[T1]{fontenc}
+\usepackage{amsmath}
+\usepackage{newtxtext,newtxmath}
+\usepackage[varqu,scaled=0.95]{zi4}
+\renewcommand{\sfdefault}{\rmdefault}% figure text uses the body serif
+\usepackage{microtype}
+
+% Restrained palette for charts: muted blues, one brick red, one ochre accent, greys.
+\usepackage{xcolor}
+\definecolor{ciViolet}{HTML}{3F6A9E}
+\definecolor{ciIndigo}{HTML}{3F6A9E}
+\definecolor{ciCyan}{HTML}{6F9CC7}
+\definecolor{ciCyanDark}{HTML}{2E5A87}
+\definecolor{ciEmerald}{HTML}{1F3550}
+\definecolor{ciAmber}{HTML}{B07D1A}
+\definecolor{ciOrange}{HTML}{B07D1A}
+\definecolor{ciCrimson}{HTML}{9E2B25}
+\definecolor{ciSlate}{HTML}{7A7A7A}
+\definecolor{ciInk}{HTML}{000000}
+\definecolor{ciMist}{HTML}{FFFFFF}
+\definecolor{ciPaper}{HTML}{FFFFFF}
+
+\usepackage{graphicx}
+\usepackage{booktabs,array,tabularx,multirow}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,calc,fit,backgrounds}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepackage[caption=false,font=footnotesize]{subfig}
+\usepackage{pifont}
+\usepackage{cite}
+\usepackage{url}
+\usepackage[hidelinks]{hyperref}
+\usepackage[capitalise,nameinlink]{cleveref}
+\crefname{figure}{Fig.}{Figs.}\Crefname{figure}{Fig.}{Figs.}
+\crefname{table}{Table}{Tables}\Crefname{table}{Table}{Tables}
+\crefname{equation}{Eq.}{Eqs.}\Crefname{equation}{Eq.}{Eqs.}
+\crefname{section}{Section}{Sections}\Crefname{section}{Section}{Sections}
+\crefname{appendix}{Appendix}{Appendices}\Crefname{appendix}{Appendix}{Appendices}
+
+\graphicspath{{figures/}}
+
+% ---------------------------------------------------------------- chart & diagram styles
+\pgfplotsset{
+  ci base/.style={
+    axis line style={black!60}, tick style={black!60},
+    tick label style={font=\scriptsize, text=black},
+    label style={font=\footnotesize, text=black},
+    grid style={black!12}, axis x line*=bottom, axis y line*=left,
+  },
+  ci square/.style={width=\linewidth, height=0.95\linewidth, xmin=0, xmax=1, ymin=0, ymax=1,
+    grid=major, xtick={0,0.25,0.5,0.75,1}, ytick={0,0.25,0.5,0.75,1},
+    xticklabels={0,.25,.5,.75,1}, yticklabels={0,.25,.5,.75,1}},
+  ci labels/.style={nodes near coords={\pgfmathprintnumber[fixed,precision=1]{\pgfplotspointmeta}\%},
+    nodes near coords style={font=\scriptsize, text=black, above}},
+}
+\tikzset{
+  ci note/.style={font=\scriptsize, fill=white, inner sep=1.5pt, draw=black!30},
+  stage/.style={draw=black!70, fill=white, line width=0.5pt, minimum height=1.15cm,
+    text width=2.3cm, align=center, font=\scriptsize},
+  pstage/.style={draw=black!70, fill=white, line width=0.5pt, minimum height=0.74cm,
+    text width=3.15cm, align=center, font=\scriptsize},
+  flow/.style={-{Stealth[length=4pt]}, line width=0.55pt, color=black!75},
+}
+
+% ---------------------------------------------------------------- table helpers
+\newcommand{\cmark}{\ding{51}}
+\newcommand{\xmark}{\ding{55}}
+\newcommand{\vbar}[1]{#1}
+\newcommand{\impbar}[1]{#1}
+\newcolumntype{L}{>{\raggedright\arraybackslash}X}
+% Table rows are read with TeX's primitive \input: unlike LaTeX's \input it runs no file
+% hooks, so a following \bottomrule still sits directly after the last \\.
+\makeatletter
+\newcommand{\genrows}[1]{\@@input generated/#1.tex }
+\makeatother
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\para}[1]{\par\textit{#1.}\ }% IEEE-style run-in heading
+
+% ---------------------------------------------------------------- generated content
+\input{generated/macros}
+\input{generated/macros_example}
+\input{generated/macros_importance}
+
+\hypersetup{
+  pdftitle={ChurnAI: Calibrated, Explainable and Cost-Sensitive Customer Churn Prediction},
+  pdfauthor={Krish Kamra},
+  pdfkeywords={churn prediction, calibration, cost-sensitive learning, SHAP, counterfactuals}
+}
+
+\title{ChurnAI: Calibrated, Explainable and Cost-Sensitive\\ Customer Churn Prediction}
+\author{\IEEEauthorblockN{Krish Kamra}
+\IEEEauthorblockA{Independent Researcher\\
+\url{https://github.com/KrishKamra/Customer_Churn_Prediction}}}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Customer churn models are usually judged on accuracy or ROC-AUC alone, and then deployed with a
+default 0.5 threshold that ignores both class imbalance and the asymmetric cost of errors. We
+present ChurnAI, an end-to-end, fully reproducible churn-prediction system built on the IBM Telco
+dataset (\NCustomers{} customers, \ChurnRate{} churn). We first establish which behavioural
+differences are statistically real: Welch and Mann--Whitney tests on continuous attributes, plus
+$\chi^2$ tests with bias-corrected Cram\'er's $V$ on 16 categorical attributes. We then run a
+leakage-free tournament of six learners (ElasticNet logistic regression, Balanced Random Forest,
+LightGBM, XGBoost, CatBoost and a stacking ensemble). Every learner is wrapped in an identical
+feature pipeline and in isotonic calibration, and each is scored with
+\CVRepeats{}$\times$\CVFolds{}-fold repeated stratified cross-validation. The decision threshold
+is chosen to minimise the expected cost $5\,\mathrm{FN}+1\,\mathrm{FP}$ on out-of-fold
+predictions, never on the holdout. The regularised linear model wins (CV PR-AUC
+\CVPR{}\,$\pm$\,\CVPRsd{}). On an untouched holdout of \NHoldout{} customers it reaches ROC-AUC
+\HoldoutROC{}, PR-AUC \HoldoutPR{}, recall \HoldoutRecall{} and a Brier score of
+\HoldoutBrier{}. That is \LossSavingNone{} less expected loss than doing nothing, and
+\LossSavingAll{} less than a blanket retention offer. We explain predictions with SHAP and
+model-based counterfactuals, audit subgroup behaviour, and ship the model behind a calibrated,
+explainable dashboard with a SQL audit trail and a CI quality gate. All experiments ran on a
+single laptop CPU.
+\end{abstract}
+
+\begin{IEEEkeywords}
+churn prediction, probability calibration, cost-sensitive learning, SHAP, counterfactual
+explanations, reproducibility
+\end{IEEEkeywords}
+
+% =====================================================================================
+\section{Introduction}
+\label{sec:intro}
+
+Retaining an existing subscriber is typically far cheaper than acquiring a new one, which makes
+churn prediction one of the most widely deployed applications of supervised learning in
+subscription businesses \cite{neslin2006defection,verbeke2012new}. Yet the gap between a
+promising notebook and a decision system that a retention team can trust is wide. Three issues
+recur in practice:
+\begin{enumerate}
+  \item \textbf{Misaligned metrics.} With roughly one churner per three customers, accuracy
+  rewards ignoring churners, and ROC-AUC hides poor precision in the region that matters
+  \cite{saito2015precision,davis2006relationship}.
+  \item \textbf{Uncalibrated scores and naive thresholds.} Class re-weighting and boosting
+  distort probabilities \cite{niculescu2005predicting}. A fixed 0.5 threshold then ignores that a
+  missed churner costs far more than a wasted retention offer \cite{elkan2001foundations}.
+  \item \textbf{Opacity and leakage.} Target-derived encodings and preprocessing fitted
+  before the train/validation split inflate offline metrics. Black-box scores without
+  explanations are also hard to act on.
+\end{enumerate}
+
+\para{Contributions}This report documents ChurnAI, an open-source reference system
+that addresses each issue:
+\begin{itemize}
+  \item an \textbf{inferential analysis} that separates real churn drivers from noise before
+        any model is trained (\cref{sec:stats});
+  \item a \textbf{leakage-free tournament} of six learners sharing one pipeline, with
+        calibration inside every fold and a fingerprinted holdout (\cref{sec:method});
+  \item a \textbf{cost-optimal decision rule} chosen on out-of-fold predictions, plus an
+        honest analysis of threshold sensitivity (\cref{sec:results});
+  \item \textbf{explanations and a subgroup audit}: global and local SHAP, counterfactual
+        retention prescriptions and subgroup error rates (\cref{sec:xai,sec:fairness});
+  \item a \textbf{production system}: dashboard, SQL audit log, tests and CI gate, all
+        reproducible on a laptop CPU (\cref{sec:system} and the Appendix).
+\end{itemize}
+
+\Cref{tab:summary} summarises the headline results.
+
+\begin{table}[t]
+\caption{Summary of Key Results}
+\label{tab:summary}
+\centering
+\footnotesize
+\begin{tabularx}{\columnwidth}{@{}L r@{}}
+\toprule
+Champion (selected by CV PR-AUC) & \Champion\\
+Holdout ROC-AUC / PR-AUC & \HoldoutROC{} / \HoldoutPR\\
+Recall at $t=\Threshold$ & \HoldoutRecall{} (\HoldoutTP/\HoldoutPositives)\\
+Brier score & \HoldoutBrier\\
+Expected loss: model vs.\ no action & \LossChampion{} vs.\ \LossNone\\
+Strongest categorical driver & \code{Contract} ($V=\ContractV$)\\
+Churn in the first six months & \DangerChurn\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+% =====================================================================================
+\begin{figure*}[t]
+\centering
+\begin{tikzpicture}[node distance=0.42cm and 0.3cm]
+  \node[stage=ciCyanDark] (raw) {\textbf{Raw snapshot}\\[1pt] IBM Telco CSV\\ \NCustomers{} $\times$ 21};
+  \node[stage=ciViolet, right=of raw] (val) {\textbf{Validation}\\[1pt] Pydantic schema,\\ type checks, cleaning};
+  \node[stage=ciIndigo, right=of val] (feat) {\textbf{Feature pipeline}\\[1pt] engineered features,\\ smoothed risk ratios};
+  \node[stage=ciEmerald, right=of feat] (tour) {\textbf{Model tournament}\\[1pt] 6 learners, repeated\\ stratified CV};
+  \node[stage=ciAmber, right=of tour] (cal) {\textbf{Calibrate \& decide}\\[1pt] isotonic, $t=\arg\min$\\ $5\,$FN$+$FP};
+  \node[stage=ciCrimson, right=of cal] (art) {\textbf{Artifacts}\\[1pt] \code{joblib} pipeline,\\ metadata, reports};
+  \foreach \a/\b in {raw/val,val/feat,feat/tour,tour/cal,cal/art}
+    \draw[flow] (\a) -- (\b);
+  \node[stage=ciEmerald, below=0.85cm of feat] (ci) {\textbf{CI quality gate}\\[1pt] ruff, mypy, pytest,\\ metric thresholds};
+  \node[stage=ciViolet, below=0.85cm of tour] (ui) {\textbf{Streamlit portal}\\[1pt] risk engine, SHAP,\\ counterfactuals};
+  \node[stage=ciIndigo, below=0.85cm of cal] (batch) {\textbf{Batch scoring}\\[1pt] validated CSV,\\ ranked risk tiers};
+  \node[stage=ciCyanDark, below=0.85cm of art] (db) {\textbf{Audit log}\\[1pt] SQLite / PostgreSQL\\ \code{prediction\_logs}};
+  \draw[flow] (art.south) -- ++(0,-0.4) -| (ci.north);
+  \draw[flow] (art.south) -- ++(0,-0.4) -| (ui.north);
+  \draw[flow] (art.south) -- ++(0,-0.4) -| (batch.north);
+  \draw[flow] (ui) -- (batch);
+  \draw[flow] (batch) -- (db);
+  \begin{scope}[on background layer]
+    \node[fit=(raw)(art), inner sep=6pt, draw=black!35, dashed,
+      label={[font=\scriptsize\itshape, text=black!70, anchor=south west]north west:TRAINING \& RELEASE}] {};
+    \node[fit=(ci)(db), inner sep=6pt, draw=black!35, dashed,
+      label={[font=\scriptsize\itshape, text=black!70, anchor=north west]south west:SERVING \& GOVERNANCE}] {};
+  \end{scope}
+\end{tikzpicture}
+\caption{The ChurnAI system. One serialized pipeline is shared by training, the CI gate,
+the interactive dashboard and batch scoring, so no preprocessing is ever re-implemented at
+inference time.}
+\label{fig:system}
+\end{figure*}
+
+% =====================================================================================
+\section{Related Work}
+\label{sec:related}
+
+\para{Churn modelling}Telecom churn prediction has a long history in marketing science.
+Neslin et al.~\cite{neslin2006defection} showed that modelling choices materially change the profit of
+retention campaigns. Verbeke et al.~\cite{verbeke2012new} argued for profit-driven rather than
+accuracy-driven evaluation, and Burez and Van den Poel~\cite{burez2009handling} studied the effect of class imbalance.
+We follow this line and evaluate with PR-AUC and an explicit cost matrix.
+
+\para{Learners}We compare an ElasticNet-regularised logistic regression
+\cite{zou2005regularization}, the Balanced Random Forest \cite{chen2004using} from
+imbalanced-learn \cite{lemaitre2017imbalanced}, three gradient-boosting libraries
+(XGBoost \cite{chen2016xgboost}, LightGBM \cite{ke2017lightgbm}, CatBoost
+\cite{prokhorenkova2018catboost}) and stacked generalisation \cite{wolpert1992stacked}. All
+are implemented with scikit-learn \cite{pedregosa2011scikit}.
+
+\para{Calibration and costs}Isotonic regression \cite{zadrozny2002transforming} and Platt
+scaling correct the distorted probabilities that boosting and re-weighting produce
+\cite{niculescu2005predicting}. Calibration is assessed with the Brier score
+\cite{brier1950verification}. With calibrated probabilities, the cost-optimal threshold follows
+directly from the cost matrix \cite{elkan2001foundations}.
+
+\para{Explainability and accountability}SHAP \cite{lundberg2017unified} and its exact tree
+variant \cite{lundberg2020local} attribute predictions to features. Counterfactual explanations
+\cite{wachter2018counterfactual} answer the question a retention manager actually asks: what
+would change the outcome? We document the model following model-card practice
+\cite{mitchell2019model}, and we report subgroup error rates in the spirit of equality of
+opportunity \cite{hardt2016equality}.
+
+% =====================================================================================
+\section{Data}
+\label{sec:data}
+
+We use the IBM Telco Customer Churn sample dataset \cite{ibmtelco}. It records
+\NCustomers{} customers of a fictional telecom provider with 19 predictive attributes, a
+customer identifier and a binary label: whether the customer left within the last month
+(\cref{tab:dataset}). \NChurners{} customers churned (\ChurnRate{}), an imbalance of about 1:2.8.
+
+\begin{table}[t]
+\centering
+\caption{Attributes of the IBM Telco dataset, grouped by type.}
+\label{tab:dataset}
+\footnotesize
+\begin{tabularx}{\columnwidth}{@{}l L l@{}}
+\toprule
+\textbf{Group} & \textbf{Attributes} & \textbf{Type}\\
+\midrule
+Demographics & \code{gender}, \code{SeniorCitizen}, \code{Partner}, \code{Dependents} & binary\\
+Services & \code{PhoneService}, \code{MultipleLines}, \code{InternetService}, \code{OnlineSecurity}, \code{OnlineBackup}, \code{DeviceProtection}, \code{TechSupport}, \code{StreamingTV}, \code{StreamingMovies} & categorical\\
+Account & \code{Contract}, \code{PaperlessBilling}, \code{PaymentMethod} & categorical\\
+Billing \& tenure & \code{tenure} (months), \code{MonthlyCharges}, \code{TotalCharges} & numeric\\
+Label & \code{Churn} (Yes/No) & binary\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\para{Cleaning}\code{TotalCharges} is stored as text, and 11 values are blank. All 11
+belong to customers with $\text{tenure}=0$ who had not yet been billed, so we set them to their
+true value of zero rather than imputing spend that never happened. No other values are missing.
+
+\para{Lifecycle risk}Churn falls steeply with tenure (\cref{fig:cohort}). Customers in
+their first six months churn at \DangerChurn{}, versus \LoyalChurn{} after four years. This
+\emph{danger zone} is the single clearest operational finding in the data.
+
+\begin{figure}[t]
+\centering
+\input{generated/fig_cohort}
+\caption{Churn rate by tenure cohort. The 0--6 month danger zone (red) churns at more than
+twice the overall rate (dashed line).}
+\label{fig:cohort}
+\end{figure}
+
+\para{Redundancy}\code{TotalCharges} is close to tenure times monthly charges:
+its correlation with tenure is $r=\RTenureTotal$ (\cref{fig:corr}). Rather than drop it, we add a
+\emph{charge-velocity ratio} that keeps only the residual information, such as plan changes and
+discounts (\cref{sec:method}).
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.86\columnwidth]{correlation_light.png}
+\caption{Pearson correlations among the numeric attributes and the label.}
+\label{fig:corr}
+\end{figure}
+
+% =====================================================================================
+\section{Inferential Analysis}
+\label{sec:stats}
+
+Before training models, we test which differences between churners and retained customers are
+statistically real, using $\alpha=0.05$.
+
+\para{Continuous attributes}Normality (Shapiro--Wilk) and equal variances (Levene) are
+both rejected for every attribute. We therefore pair Welch's $t$-test \cite{welch1947generalization}
+with the distribution-free Mann--Whitney $U$ test \cite{mann1947test}, and report the
+rank-biserial correlation as an effect size (\cref{tab:continuous}). Churners have markedly
+shorter tenure and lower lifetime spend but \emph{higher} monthly charges: they are new
+customers on expensive plans. The two tests agree on every variable.
+
+\begin{table*}[t]
+\centering
+\caption{Continuous attributes, churned vs.\ retained customers. $r_{rb}$ is the rank-biserial
+correlation; positive values mean churners rank lower.}
+\label{tab:continuous}
+\small
+\begin{tabular}{@{}l rr r rr r@{}}
+\toprule
+& \multicolumn{2}{c}{\textbf{Mean}} & & \multicolumn{2}{c}{\textbf{$p$-value}} & \\
+\cmidrule(lr){2-3}\cmidrule(lr){5-6}
+\textbf{Attribute} & Churned & Retained & Welch $t$ & Welch & Mann--Whitney & $r_{rb}$\\
+\midrule
+\genrows{tab_continuous}
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\para{Categorical attributes}For each of the 16 categorical attributes (the 15 string
+attributes plus \code{SeniorCitizen}) we test independence from churn with a $\chi^2$ test. We
+measure association strength with Cram\'er's $V$ \cite{cramer1946mathematical}, using the
+bias-corrected estimator of Bergsma~\cite{bergsma2013bias}:
+\begin{align}
+  \tilde V &= \sqrt{\frac{\tilde\varphi^2}{\min(\tilde k-1,\tilde r-1)}},\label{eq:cramer}\\
+  \tilde\varphi^2 &= \max\!\Big(0,\frac{\chi^2}{n}-\frac{(k-1)(r-1)}{n-1}\Big),\nonumber
+\end{align}
+with $\tilde k=k-(k-1)^2/(n-1)$, and $\tilde r$ defined analogously. \Cref{tab:chisq} ranks the
+attributes. \code{Contract} is the strongest driver ($V=\ContractV$), followed by the absence
+of security and support add-ons, fiber internet and electronic-check payment. \code{gender}
+($\chi^2=\GenderChi$, $p=\GenderP$) and \code{PhoneService} are independent of churn. This
+gender result anchors the subgroup audit in \cref{sec:fairness}.
+
+\begin{table*}[t]
+\centering
+\caption{$\chi^2$ test of independence and bias-corrected Cram\'er's $V$ for all 16 categorical
+attributes, ranked by effect size. The last column shows the attribute level with the highest
+churn rate.}
+\label{tab:chisq}
+\small
+\begin{tabular}{@{}r l r r r l c l@{}}
+\toprule
+\textbf{\#} & \textbf{Attribute} & $\chi^2$ & dof & $p$-value & \textbf{Cram\'er's $V$} & Sig. & \textbf{Highest-risk level}\\
+\midrule
+\genrows{tab_chisq}
+\bottomrule
+\end{tabular}
+\end{table*}
+
+% =====================================================================================
+\section{Method}
+\label{sec:method}
+
+\subsection{Feature pipeline}
+Every learner receives the same scikit-learn pipeline. Its first stage is a stateless
+\code{FeatureEngineer} that never sees the label, so it is safe to apply anywhere. It adds
+seven numeric features and one categorical one: $\log(1+x)$ transforms of both charge
+variables, the number of add-on services, fiber/month-to-month and automatic-payment flags,
+average monthly spend, a tenure cohort, and the charge-velocity ratio
+\begin{equation}
+  v = \frac{\text{TotalCharges}}{\text{tenure}\cdot\text{MonthlyCharges}+\epsilon},\qquad v\in[0,5].
+  \label{eq:velocity}
+\end{equation}
+A target-aware \code{RiskRatioEncoder} then encodes three high-churn interactions
+(Internet$\times$Contract, Contract$\times$Payment, Cohort$\times$Contract) as smoothed risk ratios
+\begin{equation}
+  \rho(g)=\frac{1}{\pi}\cdot\frac{n_g\,\bar y_g+m\,\pi}{n_g+m},\qquad m=20,
+  \label{eq:riskratio}
+\end{equation}
+where $\pi$ is the training-fold churn rate and $\bar y_g$ the churn rate of group $g$. Unseen
+groups encode to $\rho=1$. Finally, numeric columns are median-imputed and standardised, and
+categorical columns are one-hot encoded with unknown levels ignored. Because the encoder and
+every learned transform sit \emph{inside} the pipeline, they are re-fit on each training fold,
+which removes the most common source of leakage.
+
+\subsection{Learners}
+\Cref{tab:hyper} lists the six contenders and their regularised defaults. Imbalance is handled
+by class weighting (\code{balanced}, \code{scale\_pos\_weight}) or balanced bootstrap sampling,
+never by synthetic oversampling.
+
+\begin{table}[t]
+\centering
+\caption{Tournament contenders and their main settings.}
+\label{tab:hyper}
+\footnotesize
+\begin{tabularx}{\columnwidth}{@{}l L@{}}
+\toprule
+\textbf{Model} & \textbf{Key settings}\\
+\midrule
+ElasticNet LR & \code{saga}, $C=0.5$, $\ell_1$ ratio $0.5$, balanced class weights\\
+Balanced RF & 400 trees, min leaf 3, $\sqrt{p}$ features, per-tree undersampling\\
+LightGBM & 500 trees, lr $0.03$, 15 leaves, row/col subsample $0.8$, $\lambda=2$\\
+XGBoost & 400 trees, lr $0.03$, depth 4, \code{hist}, subsample $0.8$, $\lambda=2$\\
+CatBoost & 600 iterations, lr $0.04$, depth 5, $\ell_2=5$, balanced weights\\
+Stacking & CatBoost + XGBoost + ElasticNet LR $\rightarrow$ logistic meta-learner (5-fold)\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Evaluation protocol}
+\Cref{fig:protocol} summarises the protocol. A stratified 80/20 split with a fixed seed reserves
+\NHoldout{} customers as a holdout. We store the SHA-256 fingerprint of the holdout customer IDs,
+and the CI gate refuses to evaluate if it changes. On the \NTrain{} training customers, each
+contender, wrapped in isotonic \code{CalibratedClassifierCV}, is scored with repeated stratified
+\CVFolds{}-fold CV ($\times$\CVRepeats{} repeats).
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=0.32cm]
+  \node[pstage=ciCyanDark, text width=6.6cm] (data) {\textbf{IBM Telco} \quad \NCustomers{} customers};
+  \node[pstage=ciViolet, below=0.5cm of data.south west, anchor=north west] (train) {\textbf{Training split}\\ \NTrain{} customers};
+  \node[pstage=ciCrimson, below=0.5cm of data.south east, anchor=north east] (hold) {\textbf{Holdout split}\\ \NHoldout{} \textbullet\ SHA-256 fingerprint};
+  \node[pstage=ciIndigo, below=of train] (cv) {Repeated stratified\\ \CVFolds{}-fold CV $\times$ \CVRepeats{}};
+  \node[pstage=ciIndigo, below=of cv] (fold) {per fold: fit pipeline\\ + isotonic calibration};
+  \node[pstage=ciEmerald, below=of fold] (sel) {champion $=\arg\max$ PR-AUC};
+  \node[pstage=ciAmber, below=of sel] (thr) {$t=\arg\min_t\,5\mathrm{FN}+\mathrm{FP}$\\ on out-of-fold scores};
+  \node[pstage=ciEmerald, below=of thr] (fit) {refit champion\\ on full training split};
+  \node[pstage=ciCrimson, below=of fit, xshift=0cm] (eval) {\textbf{one-time evaluation}\\ \& CI quality gate};
+  \draw[flow] (data.south) ++(-1.6,0) -- (train.north);
+  \draw[flow] (data.south) ++(1.6,0) -- (hold.north);
+  \foreach \a/\b in {train/cv,cv/fold,fold/sel,sel/thr,thr/fit,fit/eval} \draw[flow] (\a) -- (\b);
+  \draw[flow, dashed] (hold.south) |- (eval.east);
+  \node[font=\tiny\itshape, align=left, anchor=west] at ([xshift=0.3cm]hold.south |- thr.east)
+    {never used for\\ selection, tuning,\\ calibration or\\ threshold choice};
+\end{tikzpicture}
+\caption{Evaluation protocol. The holdout is touched exactly once.}
+\label{fig:protocol}
+\end{figure}
+
+\para{Metrics}The primary metric is PR-AUC (average precision), which is more informative
+than ROC-AUC under imbalance \cite{saito2015precision}. Secondary metrics are ROC-AUC, the
+Brier score $B=\frac1n\sum_i(p_i-y_i)^2$ \cite{brier1950verification}, recall, precision,
+$F_2$, and the business cost
+\begin{equation}
+  \mathcal{C}(t)=c_{\mathrm{FN}}\cdot\mathrm{FN}(t)+c_{\mathrm{FP}}\cdot\mathrm{FP}(t),\qquad
+  c_{\mathrm{FN}}=5,\;c_{\mathrm{FP}}=1,
+  \label{eq:cost}
+\end{equation}
+where one cost unit (one wasted retention offer) is valued at \CostUnit{}. This is an
+illustrative assumption, and it is configurable.
+
+\para{Decision threshold}For perfectly calibrated probabilities, the Bayes-optimal rule
+intervenes when $p\geq t^\ast=c_{\mathrm{FP}}/(c_{\mathrm{FP}}+c_{\mathrm{FN}})=1/6$
+\cite{elkan2001foundations}. We correct for residual miscalibration by minimising \cref{eq:cost}
+over a threshold grid on the out-of-fold probabilities. We take the median across repeats,
+which gives $t=\Threshold$ for the champion. This is close to $1/6$, which itself suggests the
+probabilities are well calibrated.
+
+\para{Tuning}After selection, a 30-iteration randomised search over the champion's
+hyper-parameters (here, $C$ and the $\ell_1$ ratio) is re-scored with the same CV protocol. Its
+result is adopted only if it improves mean CV PR-AUC. In our run it did not, so the regularised
+defaults were kept.
+
+% =====================================================================================
+\section{Results}
+\label{sec:results}
+
+\subsection{Cross-validated tournament}
+\Cref{tab:cv} and \cref{fig:models} report the tournament. The ElasticNet logistic regression
+achieves the highest mean PR-AUC, but the top three contenders are separated by less than one
+standard deviation. On a dataset whose non-leaky ceiling is around ROC-AUC 0.85, extra model
+capacity buys almost nothing. The stacking ensemble ties the linear model on ROC-AUC and Brier
+score, while taking about 24$\times$ longer to fit.
+
+\begin{table*}[t]
+\centering
+\caption{Repeated stratified cross-validation on the training split (mean $\pm$ SD over
+\CVRepeats{}$\times$\CVFolds{} folds; each fold re-fits the pipeline and calibration). Cost per customer
+uses each model's out-of-fold cost-optimal threshold. $^\star$\,champion.}
+\label{tab:cv}
+\small
+\begin{tabular}{@{}l c c c c r@{}}
+\toprule
+\textbf{Model} & \textbf{PR-AUC} $\uparrow$ & \textbf{ROC-AUC} $\uparrow$ & \textbf{Brier} $\downarrow$ & \textbf{Cost / customer} $\downarrow$ & \textbf{Fit (s)}\\
+\midrule
+\genrows{tab_cv}
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\begin{figure}[t]
+\centering
+\input{generated/fig_models}
+\caption{Cross-validated PR-AUC ($\pm$1 SD) and holdout PR-AUC (diamonds). The differences
+among the top contenders lie within fold-to-fold noise.}
+\label{fig:models}
+\end{figure}
+
+\subsection{Holdout performance}
+\Cref{tab:holdout} scores every contender once on the untouched holdout, each at its own
+out-of-fold threshold. The champion attains ROC-AUC \HoldoutROC{}, PR-AUC \HoldoutPR{} and the
+best calibration (Brier \HoldoutBrier{}). At $t=\Threshold$ it identifies \HoldoutTP{} of the
+\HoldoutPositives{} churners (recall \HoldoutRecall{}) at a precision of \HoldoutPrecision{}.
+XGBoost records a marginally lower expected loss on this particular split. The gap (about 3\%)
+is well within the variation between CV folds, and we keep the pre-registered selection rule
+rather than pick a winner on the holdout. \Cref{fig:curves} shows the champion's ROC,
+precision--recall and reliability curves.
+
+\begin{table*}[t]
+\centering
+\caption{Holdout evaluation (\NHoldout{} customers). Each model uses its own cost-optimal
+threshold $t$ from out-of-fold predictions. Latency is the median single-row
+\code{predict\_proba} time of the full pipeline on a laptop CPU. Rows are sorted by expected
+loss. $^\star$\,champion.}
+\label{tab:holdout}
+\small
+\begin{tabular}{@{}l c c c c c c c r r@{}}
+\toprule
+\textbf{Model} & $t$ & \textbf{ROC-AUC} & \textbf{PR-AUC} & \textbf{Recall} & \textbf{Precision} & $\boldsymbol{F_2}$ & \textbf{Brier} & \textbf{ms} & \textbf{Loss (\$)}\\
+\midrule
+\genrows{tab_holdout}
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\begin{figure*}[t]
+\centering
+\subfloat[ROC curve]{\begin{minipage}{0.31\textwidth}\centering\input{generated/fig_roc}\end{minipage}}\hfill
+\subfloat[Precision--recall curve]{\begin{minipage}{0.31\textwidth}\centering\input{generated/fig_pr}\end{minipage}}\hfill
+\subfloat[Reliability diagram (deciles)]{\begin{minipage}{0.31\textwidth}\centering\input{generated/fig_reliability}\end{minipage}}
+\caption{Holdout diagnostics for the champion. Ranking quality (a, b) is strong, and the
+isotonic-calibrated probabilities track observed churn rates closely (c). That is what makes the
+probabilities usable for cost-based decisions and for revenue-at-risk estimates.}
+\label{fig:curves}
+\end{figure*}
+
+\subsection{Business cost and threshold sensitivity}
+The cost-optimal threshold transforms the model's value (\cref{fig:cost}). On the holdout,
+doing nothing costs \LossNone{} and a blanket offer to every customer costs \LossAll{}. The
+champion at $t=\Threshold$ costs \LossChampion{}, which is \LossSavingNone{} and
+\LossSavingAll{} lower respectively. The naive 0.5 threshold would forgo much of this gain.
+\Cref{tab:threshold} shows that the loss curve is flat between $t\approx0.10$ and $0.20$. The
+exact threshold matters far less than moving away from 0.5. Within that flat region, the choice
+trades recall for retention-team workload.
+
+\begin{figure}[t]
+\centering
+\input{generated/fig_cost}
+\caption{Expected holdout loss as a function of the decision threshold. The deployed threshold
+was chosen on out-of-fold data and lies in the flat optimum, next to the Bayes rule $1/6$.}
+\label{fig:cost}
+\end{figure}
+
+\begin{table}[t]
+\centering
+\caption{Threshold sensitivity of the champion on the holdout. $^\dagger$\,deployed threshold
+(chosen out-of-fold).}
+\label{tab:threshold}
+\footnotesize
+\setlength{\tabcolsep}{4.5pt}
+\begin{tabular}{@{}l c c r r r r@{}}
+\toprule
+$t$ & \textbf{Recall} & \textbf{Prec.} & TP & FP & FN & \textbf{Loss (\$)}\\
+\midrule
+\genrows{tab_threshold}
+\bottomrule
+\end{tabular}
+\end{table}
+
+% =====================================================================================
+\section{Explainability}
+\label{sec:xai}
+
+\para{Global}For linear and tree champions, SHAP values are exact (LinearSHAP or
+TreeSHAP \cite{lundberg2017unified,lundberg2020local}). They are computed in log-odds space on the
+inner, pre-calibration pipeline. Isotonic calibration is monotone, so signs and rankings carry
+over to the deployed probability. We sum the SHAP values of one-hot columns back to their source
+attribute. \Cref{fig:shap,tab:importance} show that lifecycle features dominate: the
+cohort$\times$contract risk ratio, lifetime spend, average monthly spend and the tenure cohort.
+Internet service, contract type and missing security add-ons follow. These are the same drivers the
+inferential analysis identified independently in \cref{sec:stats}.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{shap_summary_light.png}
+\caption{Global SHAP summary on 800 holdout customers. Each dot is one customer, and the colour
+encodes the feature value.}
+\label{fig:shap}
+\end{figure}
+
+\begin{table}[t]
+\centering
+\caption{Global importance: mean $|$SHAP$|$ (log-odds), with one-hot columns aggregated to their
+source attribute.}
+\label{tab:importance}
+\footnotesize
+\begin{tabular}{@{}r l l@{}}
+\toprule
+\textbf{\#} & \textbf{Feature} & \textbf{Mean $|$SHAP$|$}\\
+\midrule
+\genrows{tab_importance}
+\bottomrule
+\end{tabular}
+\end{table}
+
+\para{Local and counterfactual}\Cref{tab:local} explains one profile: a senior,
+single, fiber-optic customer two months into a month-to-month contract, paying \$94.50 by
+electronic check, scored at \ExampleP{} churn risk. The dashboard then searches a set of
+actionable interventions (contract migration, automatic payment, support and security
+bundles, a loyalty discount) and ranks the ones that lower the score. These are
+\emph{model-based} what-ifs in the sense of Wachter et al.~\cite{wachter2018counterfactual}: they predict the
+outcome for an otherwise identical customer. They are not causal estimates of an offer's uplift,
+which still requires controlled experiments.
+
+\begin{table}[t]
+\centering
+\caption{Local explanation and counterfactual prescriptions for the ``high-risk newcomer''
+profile shown in the dashboard (\ExampleP{} predicted churn).}
+\label{tab:local}
+\footnotesize
+\begin{tabularx}{\columnwidth}{@{}L r@{}}
+\toprule
+\textbf{Top SHAP contributions} & \textbf{log-odds}\\
+\midrule
+\genrows{tab_local_shap}
+\bottomrule
+\end{tabularx}
+
+\vspace{6pt}
+\begin{tabularx}{\columnwidth}{@{}L r r@{}}
+\toprule
+\textbf{Counterfactual intervention} & \textbf{New $p$} & \textbf{$\Delta$ pts}\\
+\midrule
+\genrows{tab_counterfactual}
+\bottomrule
+\end{tabularx}
+\end{table}
+
+% =====================================================================================
+\section{Subgroup Audit}
+\label{sec:fairness}
+
+\Cref{tab:fairness} compares holdout behaviour across demographic groups at the deployed
+threshold. Calibration holds within every group: the mean predicted probability tracks the
+observed churn rate. The model behaves almost identically for women and men, consistent with
+the $\chi^2$ result in \cref{sec:stats}. Senior citizens, however, have a much higher base rate,
+and under a single global threshold they receive roughly double the false-positive rate of other
+customers, with lower ranking quality. For a retention offer, a false positive means an
+unnecessary benefit, which is acceptable. It would not be acceptable if the score drove any
+adverse action. In that case, group-specific thresholds or an equal-opportunity constraint
+\cite{hardt2016equality} would be needed. Customers with dependents see lower recall, so
+retention outreach may under-serve them.
+
+\begin{table}[t]
+\centering
+\caption{Subgroup audit on the holdout at $t=\Threshold$. FPR = false-positive rate.}
+\label{tab:fairness}
+\footnotesize
+\setlength{\tabcolsep}{3.6pt}
+\begin{tabular}{@{}l r r r r r r@{}}
+\toprule
+\textbf{Group} & $n$ & \textbf{Churn} & \textbf{Mean $p$} & \textbf{Recall} & \textbf{FPR} & \textbf{AUC}\\
+\midrule
+\genrows{tab_fairness}
+\bottomrule
+\end{tabular}
+\end{table}
+
+% =====================================================================================
+\section{System}
+\label{sec:system}
+
+The model ships as a single \code{joblib} artifact with JSON metadata recording the version,
+threshold, metrics, holdout fingerprint, library versions and host hardware. A four-page
+Streamlit portal (\cref{fig:screens}) provides (i) a real-time risk engine with a calibrated
+gauge, local SHAP waterfall and counterfactual cards; (ii) a customer database view over
+SQLite or PostgreSQL, with an audit timeline of every logged score; (iii) executive analytics
+that recompute the inferential tests live; and (iv) schema-validated batch scoring.
+Inputs are validated with Pydantic. Unknown categorical levels are ignored rather than raising
+errors, and extra columns such as the label are dropped before scoring, which closes an
+inference-time leakage path. A GitHub Actions pipeline runs ruff, mypy and 60
+tests, including leakage, determinism and database tests. It also re-scores the committed model
+on the fingerprinted holdout and fails if ROC-AUC $<0.82$, PR-AUC $<0.60$, recall $<0.75$ or
+Brier $>0.16$.
+
+\begin{figure*}[t]
+\centering
+\subfloat[Real-time risk engine]{\includegraphics[width=0.485\textwidth]{01_risk_engine.png}}\hfill
+\subfloat[Local SHAP and counterfactual prescriptions]{\includegraphics[width=0.485\textwidth]{02_explainability.png}}
+\caption{The ChurnAI dashboard. The calibrated probability, risk tier, decision and
+revenue at risk update as the profile is edited. Every score can be explained, turned into a
+ranked list of retention actions, exported as a report, and logged to the audit trail.}
+\label{fig:screens}
+\end{figure*}
+
+% =====================================================================================
+\section{Limitations and Ethics}
+\label{sec:limits}
+
+\para{Data}The dataset is a single snapshot of a fictional provider, with no time
+dimension. The model sees customer state, not trajectory (usage decline, support tickets, price
+changes), and seasonality and concept drift are not represented. Within long contracts, ranking
+quality is weak: at the deployed threshold, none of the two-year-contract churners in the
+holdout is flagged. A natural next
+step is longitudinal data such as the KKBox churn dataset.
+\para{Costs}The 5:1 cost ratio and the \CostUnit{} unit are illustrative. Real offer
+costs and customer lifetime values should be substituted, and the threshold re-derived.
+\para{Causality}Counterfactual prescriptions are associational. Customers on long
+contracts are partly self-selected loyalists, so the predicted risk reduction overstates the
+effect of moving a customer onto one. Offers should be validated with A/B tests.
+\para{Use}The model is intended to prioritise \emph{beneficial} outreach. It must not
+drive adverse actions such as price increases or service downgrades, nor decisions in regulated
+domains. Prediction logs contain customer identifiers and should be governed as personal data.
+
+% =====================================================================================
+\section{Conclusion}
+\label{sec:conclusion}
+
+On the IBM Telco dataset, careful protocol matters more than model complexity. A regularised
+logistic regression, evaluated without leakage, calibrated, and operated at a cost-derived
+threshold, matches or beats gradient boosting and stacking. It cuts expected loss by
+\LossSavingNone{} relative to inaction, while remaining fast, exactly explainable and easy to
+audit. Most of the practical value comes from steps that are often skipped: confirming drivers
+statistically, calibrating, choosing the threshold out of sample, explaining individual
+decisions and auditing subgroups. ChurnAI packages these steps into a reproducible,
+tested and documented system.
+
+% =====================================================================================
+\section*{Appendix: Reproducibility}
+
+Every number, table and chart in this report is generated from the committed model and data by
+\code{scripts/build\_paper.py}. All experiments ran locally on a single laptop CPU, with no GPU
+or cloud compute (\cref{tab:env}). The full tournament, including the 30-iteration tuning
+search, takes about ten minutes.
+
+\begin{table}[h]
+\centering
+\caption{Computing environment.}
+\label{tab:env}
+\footnotesize
+\begin{tabularx}{\columnwidth}{@{}l L@{}}
+\toprule
+Machine & ASUS Zenbook 14 (UX3405CA), laptop\\
+CPU & \HWcpu{} (\HWthreads{} threads)\\
+Memory & \HWram{}\,GB\\
+OS & \HWos{}\\
+Python & \PyVersion{}, dependencies pinned with \code{uv.lock}\\
+Libraries & scikit-learn \SklearnVersion{}, XGBoost \XGBVersion{}, LightGBM \LGBMVersion{}, CatBoost \CatBoostVersion{}, SHAP \ShapVersion{}, pandas \PandasVersion{}, NumPy \NumpyVersion{}\\
+Seed & 42 (split, CV, learners)\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\noindent\textit{Commands.}\par\smallskip
+{\footnotesize
+\begin{tabular}{@{}l@{}}
+\code{uv sync --all-extras}\\
+\code{uv run python -m src.models.train --tune-iter 30}\\
+\code{uv run python -m src.models.evaluate --validate-thresholds}\\
+\code{uv run python scripts/build\_paper.py}\\
+\code{uv run streamlit run src/ui/app.py}\\
+\end{tabular}}
+
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+
+\end{document}

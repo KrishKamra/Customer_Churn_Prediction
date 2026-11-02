@@ -1,6 +1,8 @@
 <div align="center">
 
-# 📡 ChurnAI
+<img src="docs/assets/hero.svg" alt="ChurnAI: animated terminal showing the ASCII logo, churn by tenure cohort, a live risk gauge and the holdout ROC curve" width="100%"/>
+
+# ChurnAI
 
 ### Production-grade customer churn prediction & statistical intelligence
 
@@ -13,7 +15,7 @@
 
 **Calibrated churn scores · SHAP explanations · counterfactual retention offers · statistical proof**
 
-[Quick start](#-quick-start) · [Results](#-results) · [Architecture](docs/architecture.md) · [Model card](docs/model_card.md) · [Benchmarks](docs/benchmarks.md) · [Design system](docs/design_system.md)
+[Tour](#-a-tour-of-the-app) · [Quick start](#-quick-start) · [Results](#-results) · [Paper (PDF)](docs/paper/main.pdf) · [Architecture](docs/architecture.md) · [Model card](docs/model_card.md) · [Benchmarks](docs/benchmarks.md)
 
 </div>
 
@@ -26,7 +28,7 @@ costed retention decisions:
 
 * **🔍 Real-time risk engine.** Edit any attribute and get back a *calibrated* churn
   probability, a local SHAP waterfall explaining it, and counterfactual prescriptions such as
-  *"Migrate to a two-year contract reduces churn risk from 80 % to 23 %"*. A timestamped
+  *"Migrate to a two-year contract reduces churn risk from 93 % to 40 %"*. A timestamped
   executive report downloads with one click.
 * **🗄️ Live customer database.** ID autocomplete over SQLite (zero setup) or PostgreSQL
   (`DATABASE_URL`), one-click score-and-log, and a full prediction audit timeline per customer.
@@ -39,6 +41,42 @@ costed retention decisions:
 Underneath sits a reproducible ML platform: a six-model tournament under repeated stratified
 CV, isotonic calibration, a threshold chosen to minimise business cost, a fingerprinted
 holdout, and a CI gate that blocks any model regression.
+
+## 📸 A tour of the app
+
+<p align="center">
+  <img src="docs/screenshots/01_risk_engine.png" alt="Real-time risk engine with animated gauge" width="100%"/>
+  <br/><sub><b>Real-time risk engine.</b> Calibrated probability, risk tier, decision and revenue at risk update as you edit the profile.</sub>
+</p>
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/02_explainability.png" alt="Local SHAP waterfall and counterfactual prescriptions"/></td>
+    <td width="50%"><img src="docs/screenshots/03_analytics.png" alt="Executive analytics dashboard"/></td>
+  </tr>
+  <tr>
+    <td><sub><b>Explainability.</b> Local SHAP waterfall plus ranked counterfactual retention offers.</sub></td>
+    <td><sub><b>Executive analytics.</b> Animated KPIs, the 0–6 month danger zone and contract × service risk.</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/04_statistical_evidence.png" alt="Statistical evidence tab"/></td>
+    <td width="50%"><img src="docs/screenshots/05_customer_database.png" alt="Customer database lookup"/></td>
+  </tr>
+  <tr>
+    <td><sub><b>Statistical evidence.</b> Welch, Mann-Whitney and χ² tests with bias-corrected Cramér's V.</sub></td>
+    <td><sub><b>Customer database.</b> ID search over SQLite / PostgreSQL with live scoring.</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/07_audit_history.png" alt="Prediction audit history timeline"/></td>
+    <td width="50%"><img src="docs/screenshots/06_batch_inference.png" alt="Batch inference results"/></td>
+  </tr>
+  <tr>
+    <td><sub><b>Audit trail.</b> Every logged score, with model version and decision threshold.</sub></td>
+    <td><sub><b>Batch inference.</b> Drop a CSV and get validated, tiered and ranked scores.</sub></td>
+  </tr>
+</table>
+
+## 🏗️ Architecture
 
 ![System architecture](docs/figures/system_architecture.png)
 
@@ -106,6 +144,9 @@ creates `data/churn.db` and seeds it with all 7,043 customers.
 | Lint / format / types | `uv run ruff check . && uv run ruff format --check . && uv run mypy src` |
 | Use PostgreSQL | `uv sync --extra postgres` then `DATABASE_URL=postgresql://user:pass@host/db` |
 | Re-render the architecture figure | `uv run python scripts/render_architecture.py` |
+| Re-render the animated README hero | `uv run python scripts/render_hero.py` |
+| Rebuild the paper's tables, charts and Overleaf zip | `uv run python scripts/build_paper.py` |
+| Compile the paper to `docs/paper/main.pdf` (needs MiKTeX / TeX Live) | `uv run python scripts/compile_paper.py` |
 
 All settings, including seeds, CV folds, cost matrix, risk-tier cut-offs and gate thresholds,
 can be overridden with `CHURNAI_*` environment variables or a `.env` file. See
@@ -146,10 +187,10 @@ nothing, so the training code is CPU-only and runs the same way on any machine.
 ├── data/
 │   ├── raw/              Telco_Customer_Churn.csv (immutable snapshot)
 │   └── processed/        churn_clean.parquet (versioned)
-├── docs/                 architecture · design system · model card · benchmarks · figures · evaluations
+├── docs/                 architecture · design system · model card · benchmarks · paper · screenshots · figures
 ├── models/               production_pipeline.joblib + model_metadata.json
 ├── notebooks/            01 EDA · 02 inferential statistics · 03 tournament
-├── scripts/              render_architecture.py
+├── scripts/              architecture figure · animated hero · paper builder
 ├── src/
 │   ├── config.py         pydantic-settings configuration
 │   ├── core/             logging · exceptions · host hardware fingerprint
@@ -181,6 +222,7 @@ nothing, so the training code is CPU-only and runs the same way on any machine.
 | [Model card](docs/model_card.md) | Intended use, metrics, fairness analysis, limitations |
 | [Benchmarks](docs/benchmarks.md) | Cross-model scorecards, latency, cost analysis (auto-generated) |
 | [Statistical report](docs/evaluations/statistical_report.md) | Hypothesis tests and effect sizes (auto-generated) |
+| [Technical report (PDF)](docs/paper/main.pdf) | 8-page two-column paper: method, benchmarks, explainability, subgroup audit. LaTeX source in [`docs/paper/`](docs/paper/); [`churnai_paper_overleaf.zip`](docs/paper/churnai_paper_overleaf.zip) uploads straight to Overleaf. |
 
 ## 🤝 Contributing & security
 

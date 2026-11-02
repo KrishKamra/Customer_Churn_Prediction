@@ -52,10 +52,10 @@ st.set_page_config(
 inject_styles()
 
 PAGES = {
-    "risk": "🔍  Real-Time Risk Engine",
-    "db": "🗄️  Customer Database",
-    "analytics": "📊  Executive Analytics",
-    "batch": "📂  Batch Inference",
+    "risk": ":material/query_stats: Real-Time Risk Engine",
+    "db": ":material/database: Customer Database",
+    "analytics": ":material/insights: Executive Analytics",
+    "batch": ":material/upload_file: Batch Inference",
 }
 
 # Widget keys for the risk-engine form (shared with "open in risk engine" and presets).
@@ -257,10 +257,11 @@ Model-based what-if estimates, not causal guarantees. CONFIDENTIAL — internal 
 def sidebar(predictor: ChurnPredictor | None) -> str:
     with st.sidebar:
         ui.render(
-            """<div style="display:flex;align-items:center;gap:.7rem;margin:.2rem 0 1.2rem 0">
+            f"""<div style="display:flex;align-items:center;gap:.7rem;margin:.2rem 0 1.2rem 0">
             <div style="width:42px;height:42px;border-radius:12px;display:grid;place-items:center;
             background:linear-gradient(135deg,#6366F1,#22D3EE);
-            box-shadow:0 8px 24px rgba(99,102,241,.4);font-size:1.3rem">📡</div>
+            box-shadow:0 8px 24px rgba(99,102,241,.4)" class="brand-mark">
+            {ui.icon("cell_tower")}</div>
             <div><div style="font-weight:800;font-size:1.25rem;letter-spacing:-.02em">ChurnAI</div>
             <div class="faint" style="font-size:.75rem">Retention Intelligence · v2.0</div>
             </div></div>"""
@@ -285,7 +286,8 @@ def sidebar(predictor: ChurnPredictor | None) -> str:
             )
         backend = get_settings().database_url.split(":", 1)[0].split("+")[0]
         ui.render(
-            f'<div class="faint" style="font-size:.75rem;margin-top:.4rem">🗄️ Database backend: '
+            f'<div class="faint" style="font-size:.75rem;margin-top:.4rem">'
+            f"{ui.icon('database')} Database backend: "
             f'<span class="mono">{ui.esc(backend)}</span></div>'
         )
     return choice
@@ -340,7 +342,7 @@ def risk_engine_form() -> dict[str, Any]:
         disabled=st.session_state["derive_total"],
     )
 
-    with st.expander("🛠️  Services & demographics", expanded=False):
+    with st.expander("Services & demographics", expanded=False, icon=":material/tune:"):
         a, b = st.columns(2)
         with a:
             _select("gender", "Gender")
@@ -377,7 +379,7 @@ def page_risk_engine(predictor: ChurnPredictor) -> None:
     )
     left, right = st.columns([1.05, 1], gap="large")
     with left, ui.glass_container("form"):
-        ui.section_title("📋", "Customer profile")
+        ui.section_title("badge", "Customer profile")
         raw = risk_engine_form()
 
     try:
@@ -415,7 +417,7 @@ def page_risk_engine(predictor: ChurnPredictor) -> None:
     st.write("")
     w1, w2 = st.columns([1.25, 1], gap="large")
     with w1, ui.glass_container("shap"):
-        ui.section_title("🧠", "Why this score? (local SHAP)")
+        ui.section_title("psychology", "Why this score? (local SHAP)")
         st.plotly_chart(
             ui.shap_waterfall(explanation), width="stretch", config={"displayModeBar": False}
         )
@@ -425,7 +427,7 @@ def page_risk_engine(predictor: ChurnPredictor) -> None:
             "probability."
         )
     with w2:
-        ui.section_title("💡", "Counterfactual retention prescriptions")
+        ui.section_title("lightbulb", "Counterfactual retention prescriptions")
         if cfs:
             for i, cf in enumerate(cfs):
                 ui.counterfactual_card(cf, delay_ms=120 + i * 100)
@@ -442,20 +444,27 @@ def page_risk_engine(predictor: ChurnPredictor) -> None:
         stamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
         d1, d2 = st.columns(2)
         d1.download_button(
-            "📥 Report (.txt)",
+            "Report (.txt)",
             text,
             f"churnai_risk_report_{stamp}.txt",
             "text/plain",
             width="stretch",
+            icon=":material/download:",
         )
         d2.download_button(
-            "🧾 Report (.json)",
+            "Report (.json)",
             payload,
             f"churnai_risk_report_{stamp}.json",
             "application/json",
             width="stretch",
+            icon=":material/data_object:",
         )
-        if st.button("🗂️ Log assessment to audit trail", width="stretch", type="secondary"):
+        if st.button(
+            "Log assessment to audit trail",
+            width="stretch",
+            type="secondary",
+            icon=":material/inventory_2:",
+        ):
             try:
                 get_repository().log_prediction(
                     customer_id=None,
@@ -466,7 +475,7 @@ def page_risk_engine(predictor: ChurnPredictor) -> None:
                     shap_summary=shap_summary(explanation),
                     source="ui",
                 )
-                st.toast("Assessment logged to the audit trail.", icon="✅")
+                st.toast("Assessment logged to the audit trail.", icon=":material/check_circle:")
             except ChurnAIError as exc:
                 st.error(f"Could not write to the database: {exc}")
 
@@ -516,11 +525,11 @@ def page_customer_db(predictor: ChurnPredictor) -> None:
     st.write("")
     left, right = st.columns([1.3, 1], gap="large")
     with left:
-        ui.section_title("👤", f"Profile · {customer.customer_id}")
+        ui.section_title("person", f"Profile · {customer.customer_id}")
         truth = {None: "unknown", 1: "Churned", 0: "Retained"}[customer.churned]
         ui.profile_grid(
             {
-                "Tenure": f"{customer.tenure} months",
+                "Tenure": f"{customer.tenure} month{'' if customer.tenure == 1 else 's'}",
                 "Contract": customer.contract_type,
                 "Internet": customer.internet_service,
                 "Payment": customer.payment_method,
@@ -541,7 +550,7 @@ def page_customer_db(predictor: ChurnPredictor) -> None:
             result.churn_probability, result.risk_tier, caption="Live score from the stored profile"
         )
         b1, b2 = st.columns(2)
-        if b1.button("💾 Score & log", width="stretch"):
+        if b1.button("Score & log", width="stretch", icon=":material/save:"):
             exp = get_explainer().explain_instance(frame)
             repo.log_prediction(
                 customer_id=customer.customer_id,
@@ -552,9 +561,10 @@ def page_customer_db(predictor: ChurnPredictor) -> None:
                 shap_summary=shap_summary(exp),
                 source="ui",
             )
-            st.toast(f"Logged score for {customer.customer_id}", icon="✅")
+            st.toast(f"Logged score for {customer.customer_id}", icon=":material/check_circle:")
         b2.button(
-            "🔍 Open in risk engine",
+            "Open in risk engine",
+            icon=":material/open_in_new:",
             width="stretch",
             type="secondary",
             on_click=open_in_risk_engine,
@@ -563,7 +573,7 @@ def page_customer_db(predictor: ChurnPredictor) -> None:
 
     st.write("")
     with ui.glass_container("history"):
-        ui.section_title("🕒", "Prediction audit history")
+        ui.section_title("history", "Prediction audit history")
         history = repo.history_frame(customer.customer_id)
         if history.empty:
             ui.render(
@@ -589,7 +599,7 @@ def page_customer_db(predictor: ChurnPredictor) -> None:
                 },
             )
 
-    with st.expander("📜  Latest predictions across all customers"):
+    with st.expander("Latest predictions across all customers", icon=":material/receipt_long:"):
         recent = pd.DataFrame(
             [r.model_dump(exclude={"shap_summary"}) for r in repo.recent_predictions(50)]
         )
@@ -652,12 +662,16 @@ def page_analytics() -> None:
     )
 
     tab_overview, tab_evidence, tab_models = st.tabs(
-        ["📈  Business overview", "🧪  Statistical evidence", "🏆  Model benchmarks"]
+        [
+            ":material/trending_up: Business overview",
+            ":material/science: Statistical evidence",
+            ":material/emoji_events: Model benchmarks",
+        ]
     )
     with tab_overview:
         c1, c2 = st.columns(2, gap="large")
         with c1, ui.glass_container("cohorts"):
-            ui.section_title("⏳", "Churn by tenure cohort — the danger zone")
+            ui.section_title("hourglass_bottom", "Churn by tenure cohort — the danger zone")
             colors = [
                 TOKENS["crimson"] if c == "0-6m" else TOKENS["violet"]
                 for c in cohorts["tenure_cohort"]
@@ -682,7 +696,7 @@ def page_analytics() -> None:
                 config={"displayModeBar": False},
             )
         with c2, ui.glass_container("contracts"):
-            ui.section_title("📑", "Churn by contract × internet service")
+            ui.section_title("stacked_bar_chart", "Churn by contract × internet service")
             grid = df.groupby(["Contract", "InternetService"])[TARGET_COLUMN].mean().reset_index()
             fig = px.bar(
                 grid,
@@ -699,7 +713,7 @@ def page_analytics() -> None:
             fig.update_yaxes(tickformat=".0%")
             st.plotly_chart(ui.style_figure(fig), width="stretch", config={"displayModeBar": False})
         with ui.glass_container("charges"):
-            ui.section_title("💳", "Monthly charge distribution by outcome")
+            ui.section_title("payments", "Monthly charge distribution by outcome")
             plot_df = df.assign(Outcome=np.where(df[TARGET_COLUMN] == 1, "Churned", "Retained"))
             fig = px.histogram(
                 plot_df,
@@ -717,7 +731,9 @@ def page_analytics() -> None:
 
     with tab_evidence:
         with st.expander(
-            "🧮  Continuous variables — Welch's t-test & Mann-Whitney U", expanded=True
+            "Continuous variables — Welch's t-test & Mann-Whitney U",
+            expanded=True,
+            icon=":material/functions:",
         ):
             show = cont[
                 [
@@ -749,7 +765,11 @@ def page_analytics() -> None:
                 "Churners: shorter tenure, lower lifetime spend, higher monthly bills. "
                 "Parametric and rank-based tests agree (p ≪ 0.001)."
             )
-        with st.expander("🔗  Categorical drivers — χ² independence & Cramér's V", expanded=True):
+        with st.expander(
+            "Categorical drivers — χ² independence & Cramér's V",
+            expanded=True,
+            icon=":material/hub:",
+        ):
             fig = go.Figure(
                 go.Bar(
                     y=chi["feature"][::-1],
@@ -777,7 +797,7 @@ def page_analytics() -> None:
                 f"Grey bars are not significant at α = 0.05 ({non_sig}). "
                 f"`{chi.iloc[0]['feature']}` is the primary driver."
             )
-        with st.expander("📄  Full statistical report"):
+        with st.expander("Full statistical report", icon=":material/article:"):
             report = get_settings().evaluations_dir / "statistical_report.md"
             if report.exists():
                 st.markdown(report.read_text(encoding="utf-8"))
@@ -806,7 +826,7 @@ def page_analytics() -> None:
                 )
             table = pd.DataFrame(rows).sort_values("CV PR-AUC", ascending=False)
             with ui.glass_container("bench"):
-                ui.section_title("🏁", "Tournament results")
+                ui.section_title("leaderboard", "Tournament results")
                 fig = go.Figure(
                     go.Bar(
                         x=table["Model"],
@@ -877,14 +897,15 @@ def page_batch(predictor: ChurnPredictor) -> None:
     with c1:
         upload = st.file_uploader("Drag & drop a customer CSV", type=["csv"], key="batch_upload")
     with c2, ui.glass_container("template"):
-        ui.section_title("🧩", "Need a file?")
+        ui.section_title("description", "Need a file?")
         st.caption("Download a 25-row sample in the expected schema (customerID optional).")
         st.download_button(
-            "⬇️ Sample CSV",
+            "Sample CSV",
             _template_csv(),
             "churnai_batch_template.csv",
             "text/csv",
             width="stretch",
+            icon=":material/download:",
         )
         persist = st.checkbox("Save customers & predictions to the database", value=False)
 
@@ -902,7 +923,7 @@ def page_batch(predictor: ChurnPredictor) -> None:
                 f"Missing columns: {', '.join(missing)}", missing_columns=missing
             )
     except (DataValidationError, ValueError, pd.errors.ParserError) as exc:
-        st.error(f"❌ {exc}")
+        st.error(str(exc), icon=":material/error:")
         return
 
     n = len(clean)
@@ -939,7 +960,7 @@ def page_batch(predictor: ChurnPredictor) -> None:
         ]
     )
     with ui.glass_container("batch-results"):
-        ui.section_title("📋", f"{n:,} customers ranked by churn risk")
+        ui.section_title("format_list_numbered", f"{n:,} customers ranked by churn risk")
         tiers = st.multiselect(
             "Filter tiers",
             ["Critical", "High", "Medium", "Low"],
@@ -960,13 +981,14 @@ def page_batch(predictor: ChurnPredictor) -> None:
         )
         stamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
         st.download_button(
-            f"📤 Export {len(view):,} scored rows (.csv)",
+            f"Export {len(view):,} scored rows (.csv)",
             view.to_csv(index=False).encode(),
             f"churnai_batch_scores_{stamp}.csv",
             "text/csv",
+            icon=":material/file_download:",
         )
 
-    if persist and st.button("💾 Write to database", type="secondary"):
+    if persist and st.button("Write to database", type="secondary", icon=":material/save:"):
         repo = get_repository()
         has_ids = ID_COLUMN in clean.columns
         if has_ids:
@@ -1006,7 +1028,7 @@ def main() -> None:
             page_analytics()
             return
         if predictor is None:
-            st.error(f"🚫 {load_error}")
+            st.error(load_error, icon=":material/block:")
             return
         if key == "risk":
             page_risk_engine(predictor)

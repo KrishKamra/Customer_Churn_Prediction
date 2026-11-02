@@ -83,6 +83,8 @@ select = ["E", "F", "I", "N", "W", "UP"]
 "notebooks/*.ipynb" = ["E402", "N816", "E501"]
 # Embedded stylesheet: CSS lines are not Python.
 "src/ui/styles.py" = ["E501"]
+# Asset renderers emit long SVG/markup strings.
+"scripts/*.py" = ["N803", "N806", "E501"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["src"]

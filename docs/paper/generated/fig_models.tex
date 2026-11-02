@@ -1,0 +1,18 @@
+\begin{tikzpicture}
+\begin{axis}[ci base, width=\columnwidth, height=5cm, symbolic x coords={ElasticNet LR,Stacking,XGBoost,Balanced RF,CatBoost,LightGBM},
+  xtick={ElasticNet LR,Stacking,XGBoost,Balanced RF,CatBoost,LightGBM}, x tick label style={rotate=28, anchor=north east, font=\scriptsize\sffamily},
+  ymin=0.60, ymax=0.68, ylabel={PR-AUC}, enlarge x limits=0.1, ymajorgrids,
+  y tick label style={/pgf/number format/fixed, /pgf/number format/precision=2},
+  legend style={at={(0.99,0.98)}, anchor=north east, font=\scriptsize\sffamily,
+  draw=none, fill=white, fill opacity=0.85, text opacity=1}, legend cell align=left]
+\addplot[ybar, bar width=15pt, bar shift=0pt, fill=ciEmerald, draw=none, area legend, error bars/.cd, y dir=both, y explicit, error bar style={ciInk, thick}]
+  coordinates {(ElasticNet LR,0.6549) +- (0,0.0184)};
+\addlegendentry{CV mean $\pm$ SD (champion)}
+\addplot[ybar, bar width=15pt, bar shift=0pt, fill=ciViolet!80, draw=none, area legend, error bars/.cd, y dir=both, y explicit, error bar style={ciInk, thick}]
+  coordinates {(Stacking,0.6524) +- (0,0.0185) (XGBoost,0.6487) +- (0,0.0176) (Balanced RF,0.6371) +- (0,0.0236) (CatBoost,0.6364) +- (0,0.0181) (LightGBM,0.6359) +- (0,0.0217)};
+\addlegendentry{CV mean $\pm$ SD}
+\addplot[only marks, mark=diamond*, mark size=3pt, color=ciAmber]
+  coordinates {(ElasticNet LR,0.6506) (Stacking,0.6468) (XGBoost,0.6371) (Balanced RF,0.6319) (CatBoost,0.6430) (LightGBM,0.6306)};
+\addlegendentry{Holdout}
+\end{axis}
+\end{tikzpicture}

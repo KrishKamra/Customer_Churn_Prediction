@@ -1,0 +1,7 @@
+\begin{tikzpicture}
+\begin{axis}[ci base, ci square, xlabel={Mean predicted probability}, ylabel={Observed churn rate}]
+\addplot[ciSlate, dashed] coordinates {(0,0) (1,1)};
+\addplot[ciEmerald, very thick, mark=*, mark size=1.6pt] coordinates {(0.01268246135052928,0.0081) (0.024746572316490287,0.0172) (0.05594630872483211,0.0537) (0.10249370012398486,0.1008) (0.1480226856348764,0.2000) (0.2440246723026318,0.2256) (0.3388179913656284,0.3295) (0.4565830041707477,0.4488) (0.6127352576908229,0.5938) (0.8180755644440872,0.8252)};
+\node[ci note] at (rel axis cs:0.62,0.18) {Brier $= 0.134$};
+\end{axis}
+\end{tikzpicture}
