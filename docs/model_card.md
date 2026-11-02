@@ -10,11 +10,12 @@
 | :--- | :--- |
 | Model version | `2.0.0+20261102.elasticnet_lr` |
 | Algorithm | ElasticNet-penalised logistic regression (`l1_ratio=0.5`, `C=0.5`, `saga`, `class_weight="balanced"`), wrapped in isotonic `CalibratedClassifierCV(cv=5, ensemble=False)` |
-| Selected by | Six-model tournament (ElasticNet LR, Balanced RF, LightGBM, XGBoost, CatBoost, Stacking). Highest mean PR-AUC under 2× repeated stratified 5-fold CV |
+| Selected by | Six-model tournament (ElasticNet LR, Balanced RF, LightGBM, XGBoost, CatBoost, Stacking). Highest mean PR-AUC under 2× repeated stratified 5-fold CV. A 30-iteration randomised search over `C` and `l1_ratio` did not improve on the defaults, so they were kept |
 | Inputs | 19 raw customer attributes (demographics, services, contract, billing), expanded to 30 pipeline features: 14 numeric (with 7 engineered and 3 smoothed risk ratios) and 16 one-hot-encoded categoricals |
 | Output | Calibrated probability that the customer churns, plus a binary *intervene* decision at threshold **0.185** and a risk tier (Low < 0.20 ≤ Medium < 0.45 ≤ High < 0.70 ≤ Critical) |
 | Decision rule | Threshold minimises `5·FN + 1·FP` on out-of-fold training predictions |
 | Training data | 5,634 customers (80 % stratified split, seed 42) |
+| Training environment | Trained and evaluated locally on CPU: ASUS Zenbook 14 (UX3405CA), Intel Core Ultra 9 285H (16 threads), 32 GB RAM, Windows 11, Python 3.12, dependencies pinned in `uv.lock`. No GPU or cloud compute was used. |
 | Developed by / contact | Krish Kamra. Issues via the repository's *model regression* template |
 | License | Apache-2.0 |
 
@@ -69,7 +70,7 @@ differ sharply by subgroup, for example 41.7 % for seniors vs 23.6 % for non-sen
 | Precision @ 0.185 | — | 47.7 % |
 | F2 @ 0.185 | — | 0.742 |
 | Expected loss @ $50 per cost unit | — | $30,650, compared with $93,471 for doing nothing and $51,756 for offering everyone |
-| Median single-row latency (full pipeline) | — | ≈ 13 ms (CPU) |
+| Median single-row latency (full pipeline) | — | ≈ 21 ms (laptop CPU, see training environment) |
 
 CV recall and precision are reported at 0.5 in `benchmarks.md` for cross-model comparability
 only. Production uses the cost-optimal threshold.

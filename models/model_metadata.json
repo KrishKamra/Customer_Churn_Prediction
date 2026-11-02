@@ -3,7 +3,7 @@
   "package_version": "2.0.0",
   "champion": "elasticnet_lr",
   "champion_display_name": "ElasticNet Logistic Regression",
-  "trained_at": "2026-11-02T16:08:44.553101+00:00",
+  "trained_at": "2026-11-02T17:14:32.898587+00:00",
   "decision_threshold": 0.185,
   "threshold_strategy": "argmin cost_fn*FN + cost_fp*FP on out-of-fold calibrated probabilities",
   "cost_matrix": {
@@ -52,7 +52,7 @@
     "cost_units": 613.0,
     "cost_per_customer": 0.4350603264726757,
     "expected_loss_usd": 30650.0,
-    "fit_time_full_s": 7.138563799904659
+    "fit_time_full_s": 9.313372799893841
   },
   "holdout_fingerprint": "1ad8aefb7e34776a78d76765d2465c630a41b3813b1d7d96d0d1b03d049776f6",
   "n_train": 5634,
@@ -82,8 +82,13 @@
   "target": "Churn",
   "tuned_params": {},
   "random_state": 42,
-  "device": "cpu",
-  "gpu": null,
+  "hardware": {
+    "cpu": "Intel(R) Core(TM) Ultra 9 285H",
+    "logical_cores": 16,
+    "ram_gb": 31.4,
+    "os": "Windows 11 (10.0.26300)",
+    "python": "3.12.13"
+  },
   "python": "3.12.13",
   "libraries": {
     "scikit-learn": "1.9.1",

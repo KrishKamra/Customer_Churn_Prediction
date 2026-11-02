@@ -14,7 +14,7 @@
 | **Honest evaluation** | A fingerprinted holdout is never used for selection, tuning, calibration or threshold choice. |
 | **Decisions in business units** | The deployed threshold minimises `5·FN + 1·FP`, not accuracy. |
 | **Config over constants** | Every knob lives in `src/config.py` (`pydantic-settings`, `CHURNAI_*` env vars). |
-| **Swap infrastructure, not code** | SQLite ↔ PostgreSQL by changing `DATABASE_URL`; CPU ↔ CUDA by `--device`. |
+| **Swap infrastructure, not code** | SQLite ↔ PostgreSQL by changing `DATABASE_URL`. |
 
 ## 2. System context (C4 level 1)
 
@@ -26,15 +26,12 @@ C4Context
     Person(mle, "ML engineer", "Retrains, benchmarks and ships models")
     System(churnai, "ChurnAI", "Churn scoring, explainability and statistical evidence platform")
     SystemDb_Ext(dw, "Customer data source", "CRM / billing export (IBM Telco schema)")
-    System_Ext(colab, "Google Colab (GPU)", "Remote L4 GPU runtime for tournaments & tuning")
     System_Ext(gh, "GitHub Actions", "Lint, type-check, tests, model validation gate")
 
     Rel(analyst, churnai, "Uses", "HTTPS / Streamlit")
     Rel(exec, churnai, "Reads dashboards & reports")
     Rel(mle, churnai, "Trains via CLI / notebooks")
     Rel(dw, churnai, "CSV snapshots / batch files")
-    Rel(mle, colab, "Runs notebook 03")
-    Rel(colab, churnai, "Produces model artifacts")
     Rel(gh, churnai, "Validates every push / PR")
 ```
 
@@ -50,7 +47,7 @@ C4Container
         Container(ui, "Streamlit portal", "Python, Streamlit, Plotly", "Risk engine, customer lookup, analytics, batch scoring (src/ui)")
         Container(core, "Inference & explainability core", "scikit-learn, SHAP", "ChurnPredictor, ChurnExplainer, counterfactuals (src/models)")
         Container(train, "Training orchestrator", "Python CLI", "Model tournament, calibration, reports (src/models/train.py)")
-        Container(nb, "Notebooks", "Jupyter / Colab", "EDA, inferential statistics, tournament (notebooks/)")
+        Container(nb, "Notebooks", "Jupyter (local)", "EDA, inferential statistics, tournament (notebooks/)")
         ContainerDb(db, "Operational database", "SQLite or PostgreSQL", "customers, prediction_logs (src/db)")
         ContainerDb(art, "Model registry (filesystem)", "joblib + JSON", "models/production_pipeline.joblib, model_metadata.json")
         ContainerDb(docs, "Evaluation store", "Markdown / JSON / PNG", "docs/benchmarks.md, docs/evaluations/*, docs/figures/*")
@@ -74,11 +71,11 @@ C4Container
 | `src.config` | `config.py` | Typed `Settings` (paths, DB URL, seeds, CV, cost matrix, risk tiers, CI gates). |
 | `src.core` | `logger.py` | Structured logging (console or one-line JSON via `CHURNAI_LOG_FORMAT=json`). |
 | | `exceptions.py` | `ChurnAIError` → `DataValidationError`, `ModelNotFoundError`, `ModelValidationError`, `DatabaseError`. |
-| | `hardware.py` | CUDA detection (`nvidia-smi`), `auto/cpu/cuda` resolution. |
+| | `hardware.py` | Host fingerprint (CPU, threads, RAM, OS) recorded with every training run. |
 | `src.features` | `schema.py` | Column contract, categorical vocabularies, Pydantic `CustomerFeatures`. |
 | | `engineer.py` | Ingestion, cleaning, stateless engineered features, tenure cohorts. |
 | | `transformers.py` | `FeatureEngineer` and target-aware `RiskRatioEncoder` (sklearn API). |
-| `src.models` | `pipeline.py` | Shared preprocessing, model zoo, calibration wrapper, search spaces, GPU→CPU portability. |
+| `src.models` | `pipeline.py` | Shared preprocessing, model zoo, calibration wrapper, search spaces. |
 | | `train.py` | Tournament orchestration + artifact writing (CLI). |
 | | `evaluate.py` | Metrics, cost-optimal threshold, latency, ROC/PR plots, **CI validation gate** (CLI). |
 | | `inference.py` | `ChurnPredictor`, `PredictionResult`, risk tiers. |
@@ -169,7 +166,7 @@ flowchart TB
     split -->|5,634| cv[Repeated Stratified 5-Fold CV<br/>× 6 contenders<br/>pipeline + calibration per fold]
     split -->|1,409 holdout<br/>SHA-256 fingerprint| hold[Holdout scoring]
     cv --> champ[Champion = max mean PR-AUC]
-    champ --> tune[Optional RandomizedSearchCV<br/>GPU on Colab]
+    champ --> tune[RandomizedSearchCV<br/>30 iterations, local CPU]
     tune --> thr[Threshold = argmin cost<br/>on out-of-fold probabilities]
     thr --> fit[Refit calibrated champion<br/>on full training split]
     fit --> hold
@@ -231,7 +228,6 @@ erDiagram
 | **Missing model artifact** | `ChurnPredictor.load` | `ModelNotFoundError` with the retrain command; the analytics page still works. |
 | **Database connection dropout** | `pool_pre_ping`, `session_scope` | Stale connections are recycled transparently; a failed transaction rolls back and surfaces a `DatabaseError` in the UI instead of crashing. |
 | **FK violation** (logging an unknown customer) | DB constraint → `DatabaseError` | Ad-hoc what-ifs are logged with `customer_id = NULL` by design. |
-| **GPU-trained model loaded on CPU** | `pipeline.to_cpu` before serialization | XGBoost boosters are switched to `device="cpu"`, and CatBoost GPU models predict on CPU natively. |
 
 ## 10. Deployment topologies
 
@@ -240,7 +236,7 @@ erDiagram
 | Local | `uv sync && uv run streamlit run src/ui/app.py` (SQLite auto-created and seeded). |
 | Streamlit Community Cloud | Entry point `src/ui/app.py`; the app bootstraps `sys.path`. Use `uv export --no-hashes > requirements.txt` if the platform needs a requirements file. |
 | Container / PaaS | Set `DATABASE_URL` to managed PostgreSQL and `CHURNAI_LOG_FORMAT=json`. Put the app behind an authenticating proxy (see `SECURITY.md`). |
-| Training on GPU | Colab notebook 03 (L4 runtime pre-selected) or `uv run python -m src.models.train --device cuda --tune-iter 30`. |
+| Training | Notebook 03 or `uv run python -m src.models.train --tune-iter 30` on any CPU. All published artifacts were trained locally on an Intel Core Ultra 9 285H (16 threads, 32 GB RAM) in about ten minutes, tuning included. |
 
 ## 11. Evolution path
 

@@ -61,7 +61,8 @@ Holdout set of 1,409 customers, never used for any modelling decision. Full tabl
 * The well-regularised linear model **wins**. On this dataset the non-leaky ceiling is about
   ROC-AUC 0.85, and every contender lands within roughly one CV standard deviation of it. The
   tournament shows that more complexity buys nothing here, and the champion is the most
-  interpretable and fastest option.
+  interpretable and fastest option. A 30-iteration randomised hyper-parameter search did not
+  beat the regularised defaults either, so the defaults ship.
 * The deployed threshold is **0.185**, not 0.5, because a missed churner is assumed to cost 5×
   a wasted retention offer. At that threshold the champion catches **322 of 374** holdout
   churners. Expected loss falls from **$93k** (do nothing) and **$52k** (offer everyone) to
@@ -96,9 +97,10 @@ creates `data/churn.db` and seeds it with all 7,043 customers.
 
 | Task | Command |
 | :--- | :--- |
-| Run the full tournament (CPU, ~5 min) | `uv run python -m src.models.train` |
+| Run the full tournament (~5 min on a laptop CPU) | `uv run python -m src.models.train` |
+| Tournament + champion hyper-parameter search | `uv run python -m src.models.train --tune-iter 30` |
 | Fast smoke run | `uv run python -m src.models.train --quick` |
-| GPU tournament + tuning | `uv run python -m src.models.train --device cuda --tune-iter 30` |
+| Re-execute the notebooks | `uv run jupyter nbconvert --execute --inplace notebooks/*.ipynb` |
 | CI model gate | `uv run python -m src.models.evaluate --validate-thresholds` |
 | Tests + coverage | `uv run pytest --cov=src` |
 | Lint / format / types | `uv run ruff check . && uv run ruff format --check . && uv run mypy src` |
@@ -109,25 +111,33 @@ All settings, including seeds, CV folds, cost matrix, risk-tier cut-offs and gat
 can be overridden with `CHURNAI_*` environment variables or a `.env` file. See
 [`src/config.py`](src/config.py).
 
-## 📓 Notebooks (Colab-ready)
+## 📓 Notebooks
 
-| Notebook | Purpose | Colab runtime |
-| :--- | :--- | :--- |
-| [01 · Exploratory data analysis](notebooks/01_exploratory_data_analysis.ipynb) [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/KrishKamra/Customer_Churn_Prediction/blob/main/notebooks/01_exploratory_data_analysis.ipynb) | Imbalance, skew, collinearity, danger-zone cohorts → parquet + figures | CPU |
-| [02 · Inferential statistics](notebooks/02_inferential_statistics.ipynb) [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/KrishKamra/Customer_Churn_Prediction/blob/main/notebooks/02_inferential_statistics.ipynb) | Welch, Mann-Whitney, 16× χ² + Cramér's V → `statistical_report.md` | CPU |
-| [03 · Model tournament & tuning](notebooks/03_model_benchmarking_tuning.ipynb) [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/KrishKamra/Customer_Churn_Prediction/blob/main/notebooks/03_model_benchmarking_tuning.ipynb) | 6-model tournament, calibration, cost curve, SHAP, CI gate | **L4 GPU + High-RAM** (pre-selected) |
+| Notebook | Purpose | Local run time |
+| :--- | :--- | :---: |
+| [01 · Exploratory data analysis](notebooks/01_exploratory_data_analysis.ipynb) | Imbalance, skew, collinearity, danger-zone cohorts → parquet + figures | ~15 s |
+| [02 · Inferential statistics](notebooks/02_inferential_statistics.ipynb) | Welch, Mann-Whitney, 16× χ² + Cramér's V → `statistical_report.md` | ~10 s |
+| [03 · Model tournament & tuning](notebooks/03_model_benchmarking_tuning.ipynb) | 6-model tournament, 30-iteration tuning, calibration, cost curve, SHAP, CI gate | ~10 min |
 
-Each notebook bootstraps itself on Colab: it clones the repo and installs it with `uv`.
-Notebooks 01 and 02 finish with a cell that downloads the generated artifacts.
+The notebooks are committed with their outputs and write their artifacts straight into the
+repository (`data/processed/`, `docs/`, `models/`).
 
-**Notebook 03 publishes its own results.** Add a `GITHUB_TOKEN` Colab secret (a fine-grained
-token with *Contents: read & write* on this repo) once. After that, **Run all** retrains the
-models, passes the validation gate, and pushes `models/`, `docs/` and `data/processed/` to a
-`colab/retrain-<timestamp>` branch. It then prints a PR link, and CI re-checks the model on that
-PR. Without the secret it downloads a zip instead. Notebook 03 detects the GPU automatically.
-It trains XGBoost with `device="cuda"` and CatBoost with `task_type="GPU"`, and turns on
-hyper-parameter search (`TUNE_ITER=30`). An **L4** is the best value for this workload: with
-7k rows, an A100 or H100 finishes no faster but uses several times more compute units.
+### 💻 Reproducibility: everything ran locally
+
+Every number, figure and model in this repository was produced on one laptop CPU. No cloud
+compute or GPU was used, and the host is recorded in `models/model_metadata.json` with each
+training run.
+
+| Component | Spec |
+| :--- | :--- |
+| Machine | ASUS Zenbook 14 (UX3405CA) |
+| CPU | Intel Core Ultra 9 285H, 16 cores / 16 threads |
+| Memory | 32 GB |
+| OS | Windows 11 (build 26300) |
+| Python | 3.12 via `uv`, dependencies pinned in `uv.lock` |
+
+Cross-validation folds run in parallel across all cores. On 7,043 rows a GPU would add
+nothing, so the training code is CPU-only and runs the same way on any machine.
 
 ## 🧱 Project layout
 
@@ -142,7 +152,7 @@ hyper-parameter search (`TUNE_ITER=30`). An **L4** is the best value for this wo
 ├── scripts/              render_architecture.py
 ├── src/
 │   ├── config.py         pydantic-settings configuration
-│   ├── core/             logging · exceptions · GPU detection
+│   ├── core/             logging · exceptions · host hardware fingerprint
 │   ├── features/         schema contract · stateless features · custom transformers
 │   ├── models/           pipeline · train · evaluate · inference · explainability · reporting
 │   ├── analytics/        inferential statistics · figure theme
@@ -159,8 +169,8 @@ hyper-parameter search (`TUNE_ITER=30`). An **L4** is the best value for this wo
 * **Honest evaluation.** The holdout is SHA-256 fingerprinted, and CI fails if it changes.
 * **Typed and linted.** `mypy` is clean on `src/`, and `ruff` enforces rules `E F I N W UP`.
 * **Tested.** 60+ tests and over 80 % coverage of non-UI code, enforced in CI on Python 3.11 and 3.12.
-* **Portable artifacts.** GPU-trained boosters are converted to CPU inference before
-  serialization.
+* **Reproducible.** Seeds are fixed, dependencies are locked, and every training run records
+  its library versions and host hardware in `models/model_metadata.json`.
 
 ## 📚 Documentation
 

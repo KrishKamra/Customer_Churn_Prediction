@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-02T16:08:44.553101+00:00",
+  "generated_at": "2026-11-02T17:14:32.898587+00:00",
   "champion": "elasticnet_lr",
   "decision_threshold": 0.185,
   "cost_matrix": {
@@ -13,8 +13,13 @@
   },
   "n_train": 5634,
   "n_holdout": 1409,
-  "device": "cpu",
-  "gpu": null,
+  "hardware": {
+    "cpu": "Intel(R) Core(TM) Ultra 9 285H",
+    "logical_cores": 16,
+    "ram_gb": 31.4,
+    "os": "Windows 11 (10.0.26300)",
+    "python": "3.12.13"
+  },
   "libraries": {
     "scikit-learn": "1.9.1",
     "xgboost": "3.4.1",
@@ -46,8 +51,8 @@
       },
       "cv_cost_per_customer": 0.42997870074547395,
       "oof_threshold": 0.185,
-      "fit_time_s": 4.183064730046317,
-      "latency_ms": 14.037949964404106,
+      "fit_time_s": 6.460667279968038,
+      "latency_ms": 20.570200053043664,
       "holdout": {
         "pr_auc": 0.6506127503866505,
         "roc_auc": 0.8480895915678525,
@@ -63,7 +68,7 @@
         "cost_units": 613.0,
         "cost_per_customer": 0.4350603264726757,
         "expected_loss_usd": 30650.0,
-        "fit_time_full_s": 7.138563799904659
+        "fit_time_full_s": 9.313372799893841
       },
       "tuned_params": {}
     },
@@ -88,8 +93,8 @@
       },
       "cv_cost_per_customer": 0.4382321618743344,
       "oof_threshold": 0.155,
-      "fit_time_s": 7.540999560011551,
-      "latency_ms": 25.752350105904043,
+      "fit_time_s": 9.982563969981857,
+      "latency_ms": 40.375899989157915,
       "holdout": {
         "pr_auc": 0.6319448082458214,
         "roc_auc": 0.8406145857552507,
@@ -105,7 +110,7 @@
         "cost_units": 601.0,
         "cost_per_customer": 0.42654364797728883,
         "expected_loss_usd": 30050.0,
-        "fit_time_full_s": 9.747512400150299
+        "fit_time_full_s": 16.223721199901775
       },
       "tuned_params": {}
     },
@@ -130,8 +135,8 @@
       },
       "cv_cost_per_customer": 0.4418707845225417,
       "oof_threshold": 0.20500000000000002,
-      "fit_time_s": 1.9747674900107086,
-      "latency_ms": 13.328750035725534,
+      "fit_time_s": 2.1355901300208644,
+      "latency_ms": 25.728299980983138,
       "holdout": {
         "pr_auc": 0.6305847314096305,
         "roc_auc": 0.838302461959751,
@@ -147,7 +152,7 @@
         "cost_units": 614.0,
         "cost_per_customer": 0.43577004968062455,
         "expected_loss_usd": 30700.0,
-        "fit_time_full_s": 2.1356641000602394
+        "fit_time_full_s": 3.357233599992469
       },
       "tuned_params": {}
     },
@@ -172,8 +177,8 @@
       },
       "cv_cost_per_customer": 0.4298012069577565,
       "oof_threshold": 0.185,
-      "fit_time_s": 3.209171890025027,
-      "latency_ms": 14.492799993604422,
+      "fit_time_s": 3.7620740299811586,
+      "latency_ms": 27.643549954518676,
       "holdout": {
         "pr_auc": 0.6370888730714261,
         "roc_auc": 0.8431760055800975,
@@ -189,7 +194,7 @@
         "cost_units": 593.0,
         "cost_per_customer": 0.42086586231369766,
         "expected_loss_usd": 29650.0,
-        "fit_time_full_s": 3.522990900091827
+        "fit_time_full_s": 6.337898999918252
       },
       "tuned_params": {}
     },
@@ -214,8 +219,8 @@
       },
       "cv_cost_per_customer": 0.4441782037628683,
       "oof_threshold": 0.165,
-      "fit_time_s": 13.210830329987221,
-      "latency_ms": 13.725100085139275,
+      "fit_time_s": 16.470357430004515,
+      "latency_ms": 34.993649926036596,
       "holdout": {
         "pr_auc": 0.64301285769506,
         "roc_auc": 0.8415316851378233,
@@ -231,7 +236,7 @@
         "cost_units": 628.0,
         "cost_per_customer": 0.44570617459190914,
         "expected_loss_usd": 31400.0,
-        "fit_time_full_s": 13.461638600099832
+        "fit_time_full_s": 26.42409380013123
       },
       "tuned_params": {}
     },
@@ -256,8 +261,8 @@
       },
       "cv_cost_per_customer": 0.4273162939297125,
       "oof_threshold": 0.175,
-      "fit_time_s": 116.52956292997115,
-      "latency_ms": 18.754799966700375,
+      "fit_time_s": 157.3044329899596,
+      "latency_ms": 40.68544995971024,
       "holdout": {
         "pr_auc": 0.6468128383947689,
         "roc_auc": 0.8485675165982072,
@@ -273,7 +278,7 @@
         "cost_units": 617.0,
         "cost_per_customer": 0.43789921930447123,
         "expected_loss_usd": 30850.0,
-        "fit_time_full_s": 133.25172280007973
+        "fit_time_full_s": 239.17802809993736
       },
       "tuned_params": {}
     }

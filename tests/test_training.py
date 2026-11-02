@@ -31,7 +31,7 @@ def tiny_run(tmp_path_factory: pytest.TempPathFactory) -> tuple[TournamentResult
             "evaluations_dir": out / "docs" / "evaluations",
         }
     )
-    result = run_tournament(settings, models=["elasticnet_lr"], device="cpu", make_figures=False)
+    result = run_tournament(settings, models=["elasticnet_lr"], make_figures=False)
     return result, out
 
 

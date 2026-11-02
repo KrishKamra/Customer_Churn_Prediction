@@ -144,7 +144,7 @@ def main() -> None:
         6.1,
         1.1,
         "Tournament (03 / CLI)",
-        ["6 models · repeated 5-fold", "Colab L4 GPU tuning"],
+        ["6 models · repeated 5-fold", "tuning · local CPU"],
         e,
     )
     box(ax, 8.9, 1.1, "Artifacts", ["production_pipeline.joblib", "model_metadata.json · docs/"], a)

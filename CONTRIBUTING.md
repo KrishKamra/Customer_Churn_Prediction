@@ -68,8 +68,8 @@ uv run python -m src.models.evaluate --validate-thresholds
 
 * Never tune on, threshold on, or otherwise peek at the **holdout** split. The CI gate
   verifies its SHA-256 fingerprint.
-* Retrain with `uv run python -m src.models.train` (add `--tune-iter 30 --device cuda` on a
-  GPU / Colab). This regenerates `models/`, `docs/benchmarks.md`,
+* Retrain with `uv run python -m src.models.train --tune-iter 30` or by executing notebook 03.
+  Both run on CPU in a few minutes. This regenerates `models/`, `docs/benchmarks.md`,
   `docs/evaluations/model_benchmarks.json` and figures — commit all of them together.
 * If metrics move, update the narrative in `docs/model_card.md` and explain the change in
   the PR. A drop below the gates in `src/config.py` (`gate_*`) fails CI by design.

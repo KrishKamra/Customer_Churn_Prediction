@@ -4,7 +4,7 @@ Examples::
 
     uv run python -m src.models.train                       # full tournament
     uv run python -m src.models.train --quick               # smoke run (2 models, 1 repeat)
-    uv run python -m src.models.train --tune-iter 40 --device cuda   # Colab GPU tuning
+    uv run python -m src.models.train --tune-iter 30         # + champion hyper-parameter search
 
 Protocol:
     1. Clean the raw snapshot and persist ``data/processed/churn_clean.parquet``.
@@ -39,7 +39,7 @@ from sklearn.model_selection import RandomizedSearchCV, RepeatedStratifiedKFold,
 
 from src import __version__
 from src.config import Settings, get_settings
-from src.core.hardware import Device, gpu_name, resolve_device
+from src.core.hardware import machine_info, machine_summary
 from src.core.logger import get_logger
 from src.features.engineer import clean_raw, load_raw, split_features_target
 from src.features.schema import FEATURE_COLUMNS, ID_COLUMN, TARGET_COLUMN
@@ -52,13 +52,11 @@ from src.models.evaluate import (
     plot_roc_pr,
 )
 from src.models.pipeline import (
-    GPU_MODELS,
     MODEL_SPECS,
     build_model_zoo,
     build_pipeline,
     calibrate,
     search_space,
-    to_cpu,
 )
 
 log = get_logger("train")
@@ -69,8 +67,6 @@ QUICK_MODELS = ("elasticnet_lr", "lightgbm")
 
 def _silence_warnings() -> None:
     warnings.filterwarnings("ignore", message=".*feature names.*")
-    # GPU booster scoring CPU frames: harmless fallback notice from XGBoost.
-    warnings.filterwarnings("ignore", message=".*Falling back to prediction using DMatrix.*")
     warnings.filterwarnings("ignore", category=FutureWarning)
     warnings.filterwarnings("ignore", category=DeprecationWarning)
 
@@ -192,27 +188,22 @@ def run_tournament(
     settings: Settings | None = None,
     models: list[str] | None = None,
     tune_iter: int = 0,
-    device: str | None = None,
     write_artifacts: bool = True,
     make_figures: bool = True,
 ) -> TournamentResult:
     """Execute the full tournament and (optionally) persist every artifact."""
     _silence_warnings()
     s = settings or get_settings()
-    resolved: Device = resolve_device(device or s.device)
     keys = models or list(MODEL_SPECS)
     unknown = sorted(set(keys) - set(MODEL_SPECS))
     if unknown:
         raise ValueError(f"Unknown model keys: {unknown}. Choose from {list(MODEL_SPECS)}")
 
-    # Single-threaded estimators with folds parallelised across cores, except GPU-trained
-    # models on CUDA, whose folds run sequentially so they do not contend for the device.
-    def fold_jobs(key: str) -> int:
-        return 1 if resolved == "cuda" and key in GPU_MODELS else -1
-
+    # Single-threaded estimators, with CV folds parallelised across all CPU cores.
+    fold_jobs = -1
     log.info(
         "Starting tournament",
-        extra={"ctx": {"device": resolved, "gpu": gpu_name(), "models": ",".join(keys),
+        extra={"ctx": {"host": machine_summary(), "models": ",".join(keys),
                        "folds": s.cv_folds, "repeats": s.cv_repeats}},
     )
 
@@ -224,12 +215,12 @@ def run_tournament(
     X_train, y_train = split_features_target(train_df)
     X_test, y_test = split_features_target(test_df)
     pos_weight = float((y_train == 0).sum() / (y_train == 1).sum())
-    zoo = build_model_zoo(s.random_state, resolved, pos_weight, n_jobs=1)
+    zoo = build_model_zoo(s.random_state, pos_weight, n_jobs=1)
 
     results: dict[str, ModelResult] = {}
     for key in keys:
         t0 = time.perf_counter()
-        results[key] = cross_validate_model(key, zoo[key], X_train, y_train, s, fold_jobs(key))
+        results[key] = cross_validate_model(key, zoo[key], X_train, y_train, s, fold_jobs)
         r = results[key]
         log.info(
             "CV %s", r.display_name,
@@ -244,10 +235,10 @@ def run_tournament(
 
     if tune_iter > 0:
         tuned, params, score = tune_estimator(
-            champion, zoo[champion], X_train, y_train, s, tune_iter, fold_jobs(champion)
+            champion, zoo[champion], X_train, y_train, s, tune_iter, fold_jobs
         )
         tuned_result = cross_validate_model(
-            champion, tuned, X_train, y_train, s, fold_jobs(champion)
+            champion, tuned, X_train, y_train, s, fold_jobs
         )
         if tuned_result.cv_mean["pr_auc"] > results[champion].cv_mean["pr_auc"]:
             tuned_result.tuned_params = {k: (v.item() if hasattr(v, "item") else v) for k, v in params.items()}
@@ -264,7 +255,6 @@ def run_tournament(
         start = time.perf_counter()
         model.fit(X_train, y_train)
         fit_s = time.perf_counter() - start
-        to_cpu(model)
         proba = model.predict_proba(X_test)[:, 1]
         r = results[key]
         r.holdout = compute_metrics(y_test, proba, r.oof_threshold, s)
@@ -296,8 +286,7 @@ def run_tournament(
         "target": TARGET_COLUMN,
         "tuned_params": champ.tuned_params,
         "random_state": s.random_state,
-        "device": resolved,
-        "gpu": gpu_name(),
+        "hardware": machine_info(),
         "python": platform.python_version(),
         "libraries": _library_versions(),
     }
@@ -329,7 +318,6 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--cv-repeats", type=int, default=None)
     parser.add_argument("--tune-iter", type=int, default=0, help="RandomizedSearch iterations "
                         "for the champion (0 disables tuning).")
-    parser.add_argument("--device", choices=["auto", "cpu", "cuda"], default=None)
     parser.add_argument("--quick", action="store_true", help="Fast smoke run: 2 models, 1 repeat.")
     parser.add_argument("--no-artifacts", action="store_true", help="Do not write any files.")
     parser.add_argument("--no-figures", action="store_true", help="Skip ROC/PR and SHAP figures.")
@@ -350,7 +338,6 @@ def main(argv: list[str] | None = None) -> int:
         settings,
         models=models,
         tune_iter=args.tune_iter,
-        device=args.device,
         write_artifacts=not args.no_artifacts,
         make_figures=not args.no_figures,
     )

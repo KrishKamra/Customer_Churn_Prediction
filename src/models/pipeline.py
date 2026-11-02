@@ -31,7 +31,6 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.utils.fixes import parse_version
 from xgboost import XGBClassifier
 
-from src.core.hardware import Device
 from src.features.engineer import ENGINEERED_CATEGORICAL, ENGINEERED_NUMERIC
 from src.features.schema import CATEGORICAL_COLUMNS, NUMERIC_COLUMNS
 from src.features.transformers import DEFAULT_INTERACTIONS, FeatureEngineer, RiskRatioEncoder
@@ -79,14 +78,10 @@ def build_preprocessor() -> ColumnTransformer:
 
 
 # scikit-learn >= 1.8 infers ElasticNet from ``l1_ratio`` and deprecates ``penalty``; older
-# releases (e.g. Colab's preinstalled build) silently fall back to L2 without it.
+# releases silently fall back to L2 without it.
 _ELASTICNET_KWARGS: dict[str, Any] = (
     {} if parse_version(sklearn.__version__) >= parse_version("1.8") else {"penalty": "elasticnet"}
 )
-
-# Estimators that train on the GPU when device == "cuda" (CV folds then run sequentially).
-GPU_MODELS: frozenset[str] = frozenset({"xgboost", "catboost", "stacking"})
-
 
 def _logistic(seed: int) -> LogisticRegression:
     return LogisticRegression(
@@ -100,7 +95,7 @@ def _logistic(seed: int) -> LogisticRegression:
     )
 
 
-def _xgboost(seed: int, device: Device, pos_weight: float, n_jobs: int) -> XGBClassifier:
+def _xgboost(seed: int, pos_weight: float, n_jobs: int) -> XGBClassifier:
     return XGBClassifier(
         n_estimators=400,
         learning_rate=0.03,
@@ -111,14 +106,13 @@ def _xgboost(seed: int, device: Device, pos_weight: float, n_jobs: int) -> XGBCl
         reg_lambda=2.0,
         scale_pos_weight=pos_weight,
         tree_method="hist",
-        device=device,
         eval_metric="aucpr",
         random_state=seed,
         n_jobs=n_jobs,
     )
 
 
-def _catboost(seed: int, device: Device, n_jobs: int) -> CatBoostClassifier:
+def _catboost(seed: int, n_jobs: int) -> CatBoostClassifier:
     params: dict[str, Any] = {
         "iterations": 600,
         "learning_rate": 0.04,
@@ -129,16 +123,12 @@ def _catboost(seed: int, device: Device, n_jobs: int) -> CatBoostClassifier:
         "verbose": 0,
         "allow_writing_files": False,
     }
-    if device == "cuda":
-        params.update(task_type="GPU", devices="0")
-    else:
-        params["thread_count"] = n_jobs
+    params["thread_count"] = n_jobs
     return CatBoostClassifier(**params)
 
 
 def build_model_zoo(
     seed: int = 42,
-    device: Device = "cpu",
     pos_weight: float = 2.77,
     n_jobs: int = 1,
 ) -> dict[str, BaseEstimator]:
@@ -146,7 +136,6 @@ def build_model_zoo(
 
     Args:
         seed: Random seed propagated to every stochastic estimator.
-        device: ``"cuda"`` enables GPU training for XGBoost and CatBoost.
         pos_weight: Negative/positive ratio used by XGBoost/LightGBM for class balance.
         n_jobs: Threads per estimator (keep at 1 when CV folds already run in parallel).
     """
@@ -177,12 +166,12 @@ def build_model_zoo(
             n_jobs=n_jobs,
             verbose=-1,
         ),
-        "xgboost": _xgboost(seed, device, pos_weight, n_jobs),
-        "catboost": _catboost(seed, device, n_jobs),
+        "xgboost": _xgboost(seed, pos_weight, n_jobs),
+        "catboost": _catboost(seed, n_jobs),
         "stacking": StackingClassifier(
             estimators=[
-                ("catboost", _catboost(seed, device, n_jobs)),
-                ("xgboost", _xgboost(seed, device, pos_weight, n_jobs)),
+                ("catboost", _catboost(seed, n_jobs)),
+                ("xgboost", _xgboost(seed, pos_weight, n_jobs)),
                 ("logreg", _logistic(seed)),
             ],
             final_estimator=LogisticRegression(C=1.0, max_iter=2000),
@@ -258,22 +247,3 @@ def search_space(key: str) -> dict[str, Any]:
         "stacking": {"model__final_estimator__C": loguniform(1e-2, 10)},
     }
     return spaces[key]
-
-
-def to_cpu(estimator: Any) -> Any:
-    """Recursively switch GPU-trained XGBoost boosters to CPU inference (portable pickle)."""
-    if isinstance(estimator, XGBClassifier):
-        estimator.set_params(device="cpu")
-        return estimator
-    for attr in ("estimator", "calibrated_classifiers_", "steps", "estimators_", "named_steps"):
-        child = getattr(estimator, attr, None)
-        if child is None:
-            continue
-        if isinstance(child, dict):
-            child = list(child.values())
-        if isinstance(child, list | tuple):
-            for item in child:
-                to_cpu(item[1] if isinstance(item, tuple) else item)
-        else:
-            to_cpu(child)
-    return estimator

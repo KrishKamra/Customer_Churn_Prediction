@@ -10,7 +10,6 @@ from __future__ import annotations
 
 from functools import lru_cache
 from pathlib import Path
-from typing import Literal
 
 from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -52,9 +51,6 @@ class Settings(BaseSettings):
     test_size: float = Field(default=0.20, gt=0.0, lt=0.5)
     cv_folds: int = Field(default=5, ge=2)
     cv_repeats: int = Field(default=2, ge=1)
-
-    # --- Compute ---------------------------------------------------------------------------
-    device: Literal["auto", "cpu", "cuda"] = "auto"
 
     # --- Business cost model ---------------------------------------------------------------
     # Cost = cost_fn * FN + cost_fp * FP  (a missed churner is 5x worse than a wasted offer).
