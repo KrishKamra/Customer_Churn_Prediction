@@ -17,6 +17,7 @@ from typing import Any
 from catboost import CatBoostClassifier
 from imblearn.ensemble import BalancedRandomForestClassifier
 from lightgbm import LGBMClassifier
+import sklearn
 from scipy.stats import loguniform, randint, uniform
 from sklearn.base import BaseEstimator
 from sklearn.calibration import CalibratedClassifierCV
@@ -27,6 +28,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import StratifiedKFold
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from sklearn.utils.fixes import parse_version
 from xgboost import XGBClassifier
 
 from src.core.hardware import Device
@@ -76,8 +78,19 @@ def build_preprocessor() -> ColumnTransformer:
     )
 
 
+# scikit-learn >= 1.8 infers ElasticNet from ``l1_ratio`` and deprecates ``penalty``; older
+# releases (e.g. Colab's preinstalled build) silently fall back to L2 without it.
+_ELASTICNET_KWARGS: dict[str, Any] = (
+    {} if parse_version(sklearn.__version__) >= parse_version("1.8") else {"penalty": "elasticnet"}
+)
+
+# Estimators that train on the GPU when device == "cuda" (CV folds then run sequentially).
+GPU_MODELS: frozenset[str] = frozenset({"xgboost", "catboost", "stacking"})
+
+
 def _logistic(seed: int) -> LogisticRegression:
     return LogisticRegression(
+        **_ELASTICNET_KWARGS,
         l1_ratio=0.5,
         C=0.5,
         solver="saga",

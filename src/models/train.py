@@ -52,6 +52,7 @@ from src.models.evaluate import (
     plot_roc_pr,
 )
 from src.models.pipeline import (
+    GPU_MODELS,
     MODEL_SPECS,
     build_model_zoo,
     build_pipeline,
@@ -68,6 +69,8 @@ QUICK_MODELS = ("elasticnet_lr", "lightgbm")
 
 def _silence_warnings() -> None:
     warnings.filterwarnings("ignore", message=".*feature names.*")
+    # GPU booster scoring CPU frames: harmless fallback notice from XGBoost.
+    warnings.filterwarnings("ignore", message=".*Falling back to prediction using DMatrix.*")
     warnings.filterwarnings("ignore", category=FutureWarning)
     warnings.filterwarnings("ignore", category=DeprecationWarning)
 
@@ -202,9 +205,11 @@ def run_tournament(
     if unknown:
         raise ValueError(f"Unknown model keys: {unknown}. Choose from {list(MODEL_SPECS)}")
 
-    # GPU: run folds sequentially and let each estimator use the device / all threads.
-    # CPU: parallelise across folds with single-threaded estimators (no oversubscription).
-    outer_jobs, inner_jobs = (1, -1) if resolved == "cuda" else (-1, 1)
+    # Single-threaded estimators with folds parallelised across cores, except GPU-trained
+    # models on CUDA, whose folds run sequentially so they do not contend for the device.
+    def fold_jobs(key: str) -> int:
+        return 1 if resolved == "cuda" and key in GPU_MODELS else -1
+
     log.info(
         "Starting tournament",
         extra={"ctx": {"device": resolved, "gpu": gpu_name(), "models": ",".join(keys),
@@ -219,12 +224,12 @@ def run_tournament(
     X_train, y_train = split_features_target(train_df)
     X_test, y_test = split_features_target(test_df)
     pos_weight = float((y_train == 0).sum() / (y_train == 1).sum())
-    zoo = build_model_zoo(s.random_state, resolved, pos_weight, inner_jobs)
+    zoo = build_model_zoo(s.random_state, resolved, pos_weight, n_jobs=1)
 
     results: dict[str, ModelResult] = {}
     for key in keys:
         t0 = time.perf_counter()
-        results[key] = cross_validate_model(key, zoo[key], X_train, y_train, s, outer_jobs)
+        results[key] = cross_validate_model(key, zoo[key], X_train, y_train, s, fold_jobs(key))
         r = results[key]
         log.info(
             "CV %s", r.display_name,
@@ -239,9 +244,11 @@ def run_tournament(
 
     if tune_iter > 0:
         tuned, params, score = tune_estimator(
-            champion, zoo[champion], X_train, y_train, s, tune_iter, outer_jobs
+            champion, zoo[champion], X_train, y_train, s, tune_iter, fold_jobs(champion)
         )
-        tuned_result = cross_validate_model(champion, tuned, X_train, y_train, s, outer_jobs)
+        tuned_result = cross_validate_model(
+            champion, tuned, X_train, y_train, s, fold_jobs(champion)
+        )
         if tuned_result.cv_mean["pr_auc"] > results[champion].cv_mean["pr_auc"]:
             tuned_result.tuned_params = {k: (v.item() if hasattr(v, "item") else v) for k, v in params.items()}
             results[champion] = tuned_result
